@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Vyasa Mahabharata</string>
+    <string name="app_name_sanskrit">व्यास महाभारत</string>
+    <string name="welcome_invocation_line1">नारायणं नमस्कृत्य नरं चैव नरोत्तमम् ।</string>
+    <string name="welcome_invocation_line2">देवीं सरस्वतीं व्यासं ततो जयमुदीरयेत् ॥</string>
+    <string name="welcome_tap_to_continue">स्पर्शेन आरभताम् • Tap anywhere to explore</string>
+    <string name="explorer_title">18 Parvas • अष्टादश पर्वाणि</string>
+    <string name="search_hint">Search verses across 4 languages…</string>
+    <string name="search_empty">No shlokas found matching your query</string>
+    <string name="language_sanskrit">संस्कृत</string>
+    <string name="language_iast">IAST</string>
+    <string name="language_hindi">हिन्दी</string>
+    <string name="language_english">English</string>
+    <string name="share_quote">Share Shloka</string>
+    <string name="bookmark_added">Bookmark added</string>
+    <string name="bookmark_removed">Bookmark removed</string>
+</resources>

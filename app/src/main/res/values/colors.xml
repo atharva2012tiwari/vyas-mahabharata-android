@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Sacred Warm Papyrus Theme (Day) -->
+    <color name="papyrus_background">#FBF8F2</color>
+    <color name="papyrus_surface">#F3ECE0</color>
+    <color name="papyrus_surface_variant">#E9E0CE</color>
+    <color name="papyrus_text_primary">#252528</color>
+    <color name="papyrus_text_secondary">#5E5953</color>
+    <color name="papyrus_primary">#8F4C1B</color>
+    <color name="papyrus_secondary">#B86F38</color>
+    <color name="papyrus_outline">#DDD4C2</color>
+
+    <!-- Dark Espresso Amber Theme (Night) -->
+    <color name="espresso_background">#1B1917</color>
+    <color name="espresso_surface">#262320</color>
+    <color name="espresso_surface_variant">#35302B</color>
+    <color name="espresso_text_primary">#EAE4DC</color>
+    <color name="espresso_text_secondary">#B3AAA0</color>
+    <color name="espresso_primary">#E28D48</color>
+    <color name="espresso_secondary">#D4A373</color>
+    <color name="espresso_outline">#3F3933</color>
+</resources>

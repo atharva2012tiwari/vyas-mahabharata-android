@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <cache-path name="quote_cards" path="quote_cards/" />
+    <cache-path name="shared_quotes" path="quotes/" />
+    <external-cache-path name="external_shared_quotes" path="quotes/" />
+</paths>
