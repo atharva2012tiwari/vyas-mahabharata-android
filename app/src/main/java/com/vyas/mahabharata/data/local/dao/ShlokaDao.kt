@@ -22,10 +22,12 @@ interface ShlokaDao {
     suspend fun getShlokaById(id: Long): ShlokaEntity?
 
     @Query("""
-        SELECT s.* FROM shlokas s
-        JOIN shlokas_fts fts ON s.id = fts.rowid
-        WHERE shlokas_fts MATCH :query
-        ORDER BY s.parva_number ASC, s.chapter_number ASC, s.verse_number ASC
+        SELECT * FROM shlokas 
+        WHERE sanskrit_devanagari LIKE '%' || :query || '%' 
+           OR sanskrit_iast LIKE '%' || :query || '%' 
+           OR translation_hindi LIKE '%' || :query || '%' 
+           OR translation_english LIKE '%' || :query || '%'
+        ORDER BY parva_number ASC, chapter_number ASC, verse_number ASC
         LIMIT :limit OFFSET :offset
     """)
     suspend fun searchShlokas(query: String, limit: Int = 50, offset: Int = 0): List<ShlokaEntity>
