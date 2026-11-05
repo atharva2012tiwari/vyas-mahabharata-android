@@ -45,6 +45,7 @@ import com.vyas.mahabharata.ui.theme.AccentSaffron
 import com.vyas.mahabharata.ui.theme.ScriptureEnglishStyle
 import com.vyas.mahabharata.ui.theme.ScriptureHindiStyle
 import com.vyas.mahabharata.ui.theme.ScriptureIASTStyle
+import com.vyas.mahabharata.ui.theme.ScriptureSanskritLargeStyle
 import com.vyas.mahabharata.ui.theme.ScriptureSanskritStyle
 import com.vyas.mahabharata.ui.theme.SpeakerHeadingStyle
 
@@ -56,6 +57,7 @@ import com.vyas.mahabharata.ui.theme.SpeakerHeadingStyle
 fun ShlokaCard(
     shloka: Shloka,
     modifier: Modifier = Modifier,
+    isLargeFont: Boolean = false,
     showSanskrit: Boolean = true,
     showIAST: Boolean = false,
     showHindi: Boolean = true,
@@ -63,6 +65,14 @@ fun ShlokaCard(
     onBookmarkToggle: () -> Unit = {},
     onShareClick: () -> Unit = {}
 ) {
+    // Invariant: Guarantee at least one language is visible
+    val effectiveShowSanskrit = showSanskrit || (!showIAST && !showHindi && !showEnglish)
+
+    val sanskritStyle = if (isLargeFont) ScriptureSanskritLargeStyle else ScriptureSanskritStyle
+    val iastStyle = if (isLargeFont) ScriptureIASTStyle.copy(fontSize = 17.sp, lineHeight = 28.sp) else ScriptureIASTStyle
+    val hindiStyle = if (isLargeFont) ScriptureHindiStyle.copy(fontSize = 18.sp, lineHeight = 31.5.sp) else ScriptureHindiStyle
+    val englishStyle = if (isLargeFont) ScriptureEnglishStyle.copy(fontSize = 18.sp, lineHeight = 29.25.sp) else ScriptureEnglishStyle
+
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -145,7 +155,7 @@ fun ShlokaCard(
 
             // Layer 1: Sanskrit Original Shloka (1.8x Line-Height)
             AnimatedVisibility(
-                visible = showSanskrit,
+                visible = effectiveShowSanskrit,
                 enter = fadeIn() + expandVertically(),
                 exit = fadeOut() + shrinkVertically()
             ) {
@@ -153,7 +163,7 @@ fun ShlokaCard(
                     Spacer(modifier = Modifier.height(14.dp))
                     Text(
                         text = shloka.sanskritDevanagari,
-                        style = ScriptureSanskritStyle,
+                        style = sanskritStyle,
                         color = MaterialTheme.colorScheme.onSurface,
                         textAlign = TextAlign.Start,
                         modifier = Modifier.fillMaxWidth()
@@ -171,20 +181,26 @@ fun ShlokaCard(
                     Spacer(modifier = Modifier.height(10.dp))
                     Text(
                         text = shloka.sanskritIast,
-                        style = ScriptureIASTStyle,
+                        style = iastStyle,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
             }
 
-            // Subtle Divider between Sanskrit and Translations
-            if ((showSanskrit || showIAST) && (showHindi || showEnglish)) {
-                Spacer(modifier = Modifier.height(16.dp))
-                HorizontalDivider(
-                    thickness = 0.5.dp,
-                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
-                )
+            // Subtle Divider between Sanskrit and Translations with smooth animated collapse/expansion
+            AnimatedVisibility(
+                visible = (effectiveShowSanskrit || showIAST) && (showHindi || showEnglish),
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically()
+            ) {
+                Column {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    HorizontalDivider(
+                        thickness = 0.5.dp,
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
+                    )
+                }
             }
 
             // Layer 3: Hindi Translation
@@ -197,7 +213,7 @@ fun ShlokaCard(
                     Spacer(modifier = Modifier.height(14.dp))
                     Text(
                         text = shloka.translationHindi,
-                        style = ScriptureHindiStyle,
+                        style = hindiStyle,
                         color = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -214,7 +230,7 @@ fun ShlokaCard(
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
                         text = shloka.translationEnglish,
-                        style = ScriptureEnglishStyle,
+                        style = englishStyle,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.fillMaxWidth()
                     )

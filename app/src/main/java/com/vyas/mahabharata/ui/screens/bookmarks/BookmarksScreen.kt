@@ -131,8 +131,8 @@ fun BookmarksScreen(
             } else {
                 LazyColumn(
                     modifier = Modifier
-                        .fillMaxWidth()
                         .widthIn(max = 600.dp)
+                        .fillMaxWidth()
                         .padding(horizontal = 16.dp),
                     contentPadding = PaddingValues(top = 12.dp, bottom = 32.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)

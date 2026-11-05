@@ -187,8 +187,8 @@ fun WelcomeScreen(
         // Calligraphic Invocation Content Column (Centered within 600dp reading measure)
         Column(
             modifier = Modifier
-                .fillMaxWidth()
                 .widthIn(max = 600.dp)
+                .fillMaxWidth()
                 .padding(horizontal = 28.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center

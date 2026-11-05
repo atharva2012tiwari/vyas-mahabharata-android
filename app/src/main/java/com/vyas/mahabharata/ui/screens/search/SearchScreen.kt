@@ -113,8 +113,8 @@ fun SearchScreen(
             // Search Input Box
             Box(
                 modifier = Modifier
-                    .fillMaxWidth()
                     .widthIn(max = 600.dp)
+                    .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 8.dp)
             ) {
                 OutlinedTextField(
@@ -152,8 +152,8 @@ fun SearchScreen(
             if (searchQuery.trim().isNotEmpty()) {
                 Row(
                     modifier = Modifier
-                        .fillMaxWidth()
                         .widthIn(max = 600.dp)
+                        .fillMaxWidth()
                         .padding(horizontal = 24.dp, vertical = 4.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
@@ -175,8 +175,8 @@ fun SearchScreen(
             // Results List
             LazyColumn(
                 modifier = Modifier
-                    .fillMaxWidth()
                     .widthIn(max = 600.dp)
+                    .fillMaxWidth()
                     .padding(horizontal = 16.dp),
                 contentPadding = PaddingValues(top = 8.dp, bottom = 32.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)

@@ -222,6 +222,7 @@ private fun LanguageToggleChip(
             .clip(RoundedCornerShape(16.dp))
             .background(bgColor)
             .clickable(
+                enabled = canDeselect || !selected,
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
                 onClick = onClick

@@ -101,6 +101,9 @@ fun ReadingCanvasScreen(
     var showHindi by remember { mutableStateOf(true) }
     var showEnglish by remember { mutableStateOf(true) }
 
+    // Dynamic typography scale: standard (20sp/36sp) vs large (24sp/43.2sp)
+    var isLargeFont by remember { mutableStateOf(false) }
+
     // Floating toolbar auto-hide state based on scroll direction
     var isToolbarVisible by remember { mutableStateOf(true) }
     var lastScrollIndex by remember { mutableIntStateOf(0) }
@@ -252,8 +255,8 @@ fun ReadingCanvasScreen(
             LazyColumn(
                 state = listState,
                 modifier = Modifier
-                    .fillMaxWidth()
                     .widthIn(max = 600.dp) // 45–65 CPL Measure Constraint
+                    .fillMaxWidth()
                     .padding(horizontal = 16.dp),
                 contentPadding = PaddingValues(top = 16.dp, bottom = 100.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -274,6 +277,7 @@ fun ReadingCanvasScreen(
                 ) { shloka ->
                     ShlokaCard(
                         shloka = shloka,
+                        isLargeFont = isLargeFont,
                         showSanskrit = showSanskrit,
                         showIAST = showIAST,
                         showHindi = showHindi,
@@ -307,14 +311,26 @@ fun ReadingCanvasScreen(
                 showIAST = showIAST,
                 showHindi = showHindi,
                 showEnglish = showEnglish,
-                onToggleSanskrit = { showSanskrit = !showSanskrit },
-                onToggleIAST = { showIAST = !showIAST },
-                onToggleHindi = { showHindi = !showHindi },
-                onToggleEnglish = { showEnglish = !showEnglish },
+                onToggleSanskrit = {
+                    val active = listOf(!showSanskrit, showIAST, showHindi, showEnglish).count { it }
+                    if (active >= 1) showSanskrit = !showSanskrit
+                },
+                onToggleIAST = {
+                    val active = listOf(showSanskrit, !showIAST, showHindi, showEnglish).count { it }
+                    if (active >= 1) showIAST = !showIAST
+                },
+                onToggleHindi = {
+                    val active = listOf(showSanskrit, showIAST, !showHindi, showEnglish).count { it }
+                    if (active >= 1) showHindi = !showHindi
+                },
+                onToggleEnglish = {
+                    val active = listOf(showSanskrit, showIAST, showHindi, !showEnglish).count { it }
+                    if (active >= 1) showEnglish = !showEnglish
+                },
                 onChapterIndexClick = { showChapterSheet = true },
                 onFontSizeClick = {
-                    // Cycles IAST transliteration on font control tap
-                    showIAST = !showIAST
+                    // Toggles between standard (20sp/36sp) and large (24sp/43.2sp) scripture font scale
+                    isLargeFont = !isLargeFont
                 },
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
