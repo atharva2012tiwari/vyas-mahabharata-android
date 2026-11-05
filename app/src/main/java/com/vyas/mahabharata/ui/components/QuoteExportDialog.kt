@@ -216,19 +216,22 @@ fun QuoteExportDialog(
                                 text = shloka.translationHindi,
                                 style = ScriptureHindiStyle.copy(
                                     fontSize = 11.sp,
-                                    lineHeight = 16.sp,
+                                    lineHeight = 15.sp,
                                     textAlign = TextAlign.Center
                                 ),
+                                maxLines = if (includeEnglish && shloka.translationEnglish.isNotBlank()) 2 else 4,
                                 color = previewText
                             )
-                        } else if (includeEnglish && shloka.translationEnglish.isNotBlank()) {
+                        }
+                        if (includeEnglish && shloka.translationEnglish.isNotBlank()) {
                             Text(
                                 text = shloka.translationEnglish,
                                 style = ScriptureEnglishStyle.copy(
                                     fontSize = 11.sp,
-                                    lineHeight = 16.sp,
+                                    lineHeight = 15.sp,
                                     textAlign = TextAlign.Center
                                 ),
+                                maxLines = if (includeHindi && shloka.translationHindi.isNotBlank()) 2 else 4,
                                 color = previewText.copy(alpha = 0.85f)
                             )
                         }
@@ -484,6 +487,11 @@ suspend fun renderQuoteCardBitmap(
             wrappedHindi
         }
         for (line in hindiLines) {
+            if (currentY + 44f > height - 140f) {
+                canvas.drawText("…", width / 2f, currentY, hindiPaint)
+                currentY += 44f
+                break
+            }
             canvas.drawText(line, width / 2f, currentY, hindiPaint)
             currentY += 44f
         }
@@ -506,6 +514,10 @@ suspend fun renderQuoteCardBitmap(
             wrappedEnglish
         }
         for (line in englishLines) {
+            if (currentY + 40f > height - 120f) {
+                canvas.drawText("…", width / 2f, currentY, englishPaint)
+                break
+            }
             canvas.drawText(line, width / 2f, currentY, englishPaint)
             currentY += 40f
         }
