@@ -133,7 +133,7 @@ class MahabharataRepositoryImpl(
         shlokaId: Long,
         collectionName: String,
         note: String?
-    ) = withContext(ioDispatcher) {
+    ): Unit = withContext(ioDispatcher) {
         val existing = bookmarkDao.getBookmarkByShlokaId(shlokaId)
         if (existing != null) {
             bookmarkDao.deleteBookmark(existing)
@@ -147,6 +147,7 @@ class MahabharataRepositoryImpl(
                 )
             )
         }
+        Unit
     }
 
     override suspend fun getShlokaByTag(verseTag: String): Shloka? = withContext(ioDispatcher) {

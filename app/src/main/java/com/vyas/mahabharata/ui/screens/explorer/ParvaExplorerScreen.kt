@@ -276,7 +276,7 @@ fun ParvaCard(
             )
 
             Text(
-                text = "${parva.nameEnglish} — ${parva.subTitle}",
+                text = "${parva.nameEnglish} — ${parva.subTitle ?: ""}",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Normal,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -286,7 +286,7 @@ fun ParvaCard(
 
             // Summary excerpt
             Text(
-                text = parva.summaryEnglish,
+                text = parva.summaryEnglish ?: "",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.85f),
                 maxLines = 2

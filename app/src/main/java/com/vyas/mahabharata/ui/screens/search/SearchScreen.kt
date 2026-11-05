@@ -282,7 +282,7 @@ private fun SearchResultCard(
                 }
 
                 Text(
-                    text = result.matchedField.uppercase(),
+                    text = result.matchedField?.uppercase() ?: "MATCH",
                     style = MaterialTheme.typography.labelSmall,
                     color = AccentSaffron,
                     fontWeight = FontWeight.SemiBold
