@@ -84,11 +84,13 @@ fun VyasTheme(
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as? Activity)?.window ?: return@SideEffect
-            window.statusBarColor = colorScheme.surface.toArgb()
-            window.navigationBarColor = colorScheme.surface.toArgb()
-            val windowInsetsController = WindowCompat.getInsetsController(window, view)
-            windowInsetsController.isAppearanceLightStatusBars = !darkTheme
-            windowInsetsController.isAppearanceLightNavigationBars = !darkTheme
+            try {
+                val windowInsetsController = WindowCompat.getInsetsController(window, view)
+                windowInsetsController.isAppearanceLightStatusBars = !darkTheme
+                windowInsetsController.isAppearanceLightNavigationBars = !darkTheme
+            } catch (_: Exception) {
+                // Safeguard against OEM ROM inset manipulation exceptions
+            }
         }
     }
 

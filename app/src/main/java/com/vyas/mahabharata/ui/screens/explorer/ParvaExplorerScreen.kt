@@ -71,6 +71,8 @@ fun ParvaExplorerScreen(
     onNavigateToBookmarks: () -> Unit
 ) {
     val parvas by repository.getAllParvas().collectAsState(initial = emptyList())
+    val allHistory by repository.getAllReadingHistory().collectAsState(initial = emptyList())
+    val historyMap = remember(allHistory) { allHistory.associateBy { it.parvaNumber } }
     val coroutineScope = rememberCoroutineScope()
 
     var selectedParvaForSheet by remember { mutableStateOf<Parva?>(null) }
@@ -132,12 +134,9 @@ fun ParvaExplorerScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 items(parvas, key = { it.id }) { parva ->
-                    val readingHistoryState = repository.getReadingHistory(parva.number)
-                        .collectAsState(initial = null)
-
                     ParvaCard(
                         parva = parva,
-                        readingHistory = readingHistoryState.value,
+                        readingHistory = historyMap[parva.number],
                         onClick = {
                             selectedParvaForSheet = parva
                             coroutineScope.launch {

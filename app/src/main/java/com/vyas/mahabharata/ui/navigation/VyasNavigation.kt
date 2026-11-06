@@ -42,7 +42,7 @@ fun VyasNavHost(
 ) {
     NavHost(
         navController = navController,
-        startDestination = Screen.Welcome.route,
+        startDestination = Screen.Explorer.route,
         modifier = modifier
     ) {
         // Welcome Screen with Procedural Ripples

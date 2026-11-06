@@ -103,6 +103,12 @@ class MahabharataRepositoryImpl(
             .flowOn(ioDispatcher)
     }
 
+    override fun getAllReadingHistory(): Flow<List<ReadingHistory>> {
+        return readingHistoryDao.getAllHistory()
+            .map { list -> list.map { it.toDomain() } }
+            .flowOn(ioDispatcher)
+    }
+
     override suspend fun saveReadingPosition(
         parvaNumber: Int,
         chapterNumber: Int,

@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -24,6 +25,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
@@ -58,7 +60,6 @@ import com.vyas.mahabharata.data.repository.MahabharataRepository
 import com.vyas.mahabharata.domain.model.Chapter
 import com.vyas.mahabharata.domain.model.Parva
 import com.vyas.mahabharata.domain.model.Shloka
-import com.vyas.mahabharata.ui.components.FloatingReaderBar
 import com.vyas.mahabharata.ui.components.QuoteExportDialog
 import com.vyas.mahabharata.ui.components.ShlokaCard
 import com.vyas.mahabharata.ui.screens.explorer.ChapterSelectorSheet
@@ -102,12 +103,8 @@ fun ReadingCanvasScreen(
     var showEnglish by remember { mutableStateOf(true) }
 
     // Dynamic typography scale: standard (20sp/36sp) vs large (24sp/43.2sp)
-    var isLargeFont by remember { mutableStateOf(false) }
-
-    // Floating toolbar auto-hide state based on scroll direction
-    var isToolbarVisible by remember { mutableStateOf(true) }
-    var lastScrollIndex by remember { mutableIntStateOf(0) }
-    var lastScrollOffset by remember { mutableIntStateOf(0) }
+    // Reader settings dialog state
+    var showSettingsDialog by remember { mutableStateOf(false) }
 
     // Quote export dialog state
     var quoteExportShloka by remember { mutableStateOf<Shloka?>(null) }
@@ -126,9 +123,6 @@ fun ReadingCanvasScreen(
                 if (targetIndex >= 0) {
                     val targetItem = targetIndex + 1
                     listState.scrollToItem(targetItem, 0)
-                    lastScrollIndex = targetItem
-                    lastScrollOffset = 0
-                    isToolbarVisible = true
                 }
             } else {
                 val history = readingHistory
@@ -137,9 +131,6 @@ fun ReadingCanvasScreen(
                     if (targetIndex >= 0) {
                         val targetItem = targetIndex + 1
                         listState.scrollToItem(targetItem, history.scrollOffset)
-                        lastScrollIndex = targetItem
-                        lastScrollOffset = history.scrollOffset
-                        isToolbarVisible = true
                     }
                 }
             }
@@ -147,32 +138,11 @@ fun ReadingCanvasScreen(
         }
     }
 
-    // Scroll delta detection to auto-hide toolbar on scroll down and reveal on scroll up
+    // Persist reading position smoothly on scroll
     LaunchedEffect(listState) {
         snapshotFlow { listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset }
             .distinctUntilChanged()
             .collect { (currentIndex, currentOffset) ->
-                val isScrollingDown = when {
-                    currentIndex > lastScrollIndex -> true
-                    currentIndex < lastScrollIndex -> false
-                    else -> currentOffset > lastScrollOffset + 8
-                }
-                val isScrollingUp = when {
-                    currentIndex < lastScrollIndex -> true
-                    currentIndex > lastScrollIndex -> false
-                    else -> currentOffset < lastScrollOffset - 8
-                }
-
-                if (isScrollingDown && currentIndex > 0) {
-                    isToolbarVisible = false
-                } else if (isScrollingUp) {
-                    isToolbarVisible = true
-                }
-
-                lastScrollIndex = currentIndex
-                lastScrollOffset = currentOffset
-
-                // Persist reading position (accounting for header item at index 0)
                 if (hasRestoredPosition && shlokas.isNotEmpty()) {
                     val shlokaIndex = (currentIndex - 1).coerceAtLeast(0)
                     if (shlokaIndex in shlokas.indices) {
@@ -216,6 +186,13 @@ fun ReadingCanvasScreen(
                     }
                 },
                 actions = {
+                    IconButton(onClick = { showSettingsDialog = true }) {
+                        Icon(
+                            imageVector = Icons.Filled.Settings,
+                            contentDescription = "Reading Settings",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                     IconButton(onClick = { showChapterSheet = true }) {
                         Icon(
                             imageVector = Icons.Filled.List,
@@ -258,7 +235,7 @@ fun ReadingCanvasScreen(
                     .widthIn(max = 600.dp) // 45–65 CPL Measure Constraint
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp),
-                contentPadding = PaddingValues(top = 16.dp, bottom = 100.dp),
+                contentPadding = PaddingValues(top = 16.dp, bottom = 32.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 // Chapter Header
@@ -277,7 +254,6 @@ fun ReadingCanvasScreen(
                 ) { shloka ->
                     ShlokaCard(
                         shloka = shloka,
-                        isLargeFont = isLargeFont,
                         showSanskrit = showSanskrit,
                         showIAST = showIAST,
                         showHindi = showHindi,
@@ -303,40 +279,34 @@ fun ReadingCanvasScreen(
                     )
                 }
             }
-
-            // Floating Horizontal Reader Toolbar anchored at bottom-center
-            FloatingReaderBar(
-                isVisible = isToolbarVisible,
-                showSanskrit = showSanskrit,
-                showIAST = showIAST,
-                showHindi = showHindi,
-                showEnglish = showEnglish,
-                onToggleSanskrit = {
-                    val active = listOf(!showSanskrit, showIAST, showHindi, showEnglish).count { it }
-                    if (active >= 1) showSanskrit = !showSanskrit
-                },
-                onToggleIAST = {
-                    val active = listOf(showSanskrit, !showIAST, showHindi, showEnglish).count { it }
-                    if (active >= 1) showIAST = !showIAST
-                },
-                onToggleHindi = {
-                    val active = listOf(showSanskrit, showIAST, !showHindi, showEnglish).count { it }
-                    if (active >= 1) showHindi = !showHindi
-                },
-                onToggleEnglish = {
-                    val active = listOf(showSanskrit, showIAST, showHindi, !showEnglish).count { it }
-                    if (active >= 1) showEnglish = !showEnglish
-                },
-                onChapterIndexClick = { showChapterSheet = true },
-                onFontSizeClick = {
-                    // Toggles between standard (20sp/36sp) and large (24sp/43.2sp) scripture font scale
-                    isLargeFont = !isLargeFont
-                },
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 8.dp)
-            )
         }
+    }
+
+    // Reader Settings Dialog (Languages & Translations)
+    if (showSettingsDialog) {
+        ReaderSettingsDialog(
+            showSanskrit = showSanskrit,
+            showIAST = showIAST,
+            showHindi = showHindi,
+            showEnglish = showEnglish,
+            onToggleSanskrit = {
+                val active = listOf(!showSanskrit, showIAST, showHindi, showEnglish).count { it }
+                if (active >= 1) showSanskrit = !showSanskrit
+            },
+            onToggleIAST = {
+                val active = listOf(showSanskrit, !showIAST, showHindi, showEnglish).count { it }
+                if (active >= 1) showIAST = !showIAST
+            },
+            onToggleHindi = {
+                val active = listOf(showSanskrit, showIAST, !showHindi, showEnglish).count { it }
+                if (active >= 1) showHindi = !showHindi
+            },
+            onToggleEnglish = {
+                val active = listOf(showSanskrit, showIAST, showHindi, !showEnglish).count { it }
+                if (active >= 1) showEnglish = !showEnglish
+            },
+            onDismissRequest = { showSettingsDialog = false }
+        )
     }
 
     // High-Res Quote Export Dialog
@@ -360,6 +330,115 @@ fun ReadingCanvasScreen(
             onDismissRequest = { showChapterSheet = false }
         )
     }
+}
+
+/**
+ * Clean Reading Settings Dialog for toggling script and translations.
+ */
+@Composable
+private fun ReaderSettingsDialog(
+    showSanskrit: Boolean,
+    showIAST: Boolean,
+    showHindi: Boolean,
+    showEnglish: Boolean,
+    onToggleSanskrit: () -> Unit,
+    onToggleIAST: () -> Unit,
+    onToggleHindi: () -> Unit,
+    onToggleEnglish: () -> Unit,
+    onDismissRequest: () -> Unit
+) {
+    val activeCount = listOf(showSanskrit, showIAST, showHindi, showEnglish).count { it }
+
+    androidx.compose.material3.AlertDialog(
+        onDismissRequest = onDismissRequest,
+        shape = RoundedCornerShape(24.dp),
+        title = {
+            Text(
+                text = "पठन विन्यास • Reading Settings",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    text = "अनुवाद एवं भाषा प्रदर्शन (Languages & Translations):",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable(enabled = activeCount > 1 || !showSanskrit, onClick = onToggleSanskrit)
+                        .padding(vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    androidx.compose.material3.Checkbox(
+                        checked = showSanskrit,
+                        onCheckedChange = { onToggleSanskrit() },
+                        enabled = activeCount > 1 || !showSanskrit
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("संस्कृत श्लोक (Devanagari)", style = MaterialTheme.typography.bodyMedium)
+                }
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable(enabled = activeCount > 1 || !showIAST, onClick = onToggleIAST)
+                        .padding(vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    androidx.compose.material3.Checkbox(
+                        checked = showIAST,
+                        onCheckedChange = { onToggleIAST() },
+                        enabled = activeCount > 1 || !showIAST
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("IAST (Roman Script)", style = MaterialTheme.typography.bodyMedium)
+                }
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable(enabled = activeCount > 1 || !showHindi, onClick = onToggleHindi)
+                        .padding(vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    androidx.compose.material3.Checkbox(
+                        checked = showHindi,
+                        onCheckedChange = { onToggleHindi() },
+                        enabled = activeCount > 1 || !showHindi
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("हिन्दी अनुवाद (Hindi Meaning)", style = MaterialTheme.typography.bodyMedium)
+                }
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable(enabled = activeCount > 1 || !showEnglish, onClick = onToggleEnglish)
+                        .padding(vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    androidx.compose.material3.Checkbox(
+                        checked = showEnglish,
+                        onCheckedChange = { onToggleEnglish() },
+                        enabled = activeCount > 1 || !showEnglish
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("English Translation", style = MaterialTheme.typography.bodyMedium)
+                }
+            }
+        },
+        confirmButton = {
+            androidx.compose.material3.TextButton(onClick = onDismissRequest) {
+                Text("सम्पूर्ण • Done")
+            }
+        }
+    )
 }
 
 @Composable

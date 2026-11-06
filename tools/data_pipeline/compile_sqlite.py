@@ -24,8 +24,8 @@ def init_database(db_path: str):
     # 1. Parvas master table
     cur.execute("""
         CREATE TABLE IF NOT EXISTS parvas (
-            id INTEGER PRIMARY KEY,
-            number INTEGER NOT NULL UNIQUE,
+            id INTEGER NOT NULL,
+            number INTEGER NOT NULL,
             name_sanskrit TEXT NOT NULL,
             name_hindi TEXT NOT NULL,
             name_english TEXT NOT NULL,
@@ -33,32 +33,32 @@ def init_database(db_path: str):
             summary_english TEXT,
             summary_hindi TEXT,
             color_seed TEXT,
-            chapter_count INTEGER DEFAULT 0,
-            shloka_count INTEGER DEFAULT 0
+            chapter_count INTEGER NOT NULL DEFAULT 0,
+            shloka_count INTEGER NOT NULL DEFAULT 0,
+            PRIMARY KEY(id)
         )
     """)
-    
-    # Create indexes for rapid querying
     cur.execute("CREATE UNIQUE INDEX IF NOT EXISTS index_parvas_number ON parvas(number)")
 
     # 2. Chapters table
     cur.execute("""
         CREATE TABLE IF NOT EXISTS chapters (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
             parva_number INTEGER NOT NULL,
             chapter_number INTEGER NOT NULL,
             title_sanskrit TEXT NOT NULL,
             title_hindi TEXT NOT NULL,
             title_english TEXT NOT NULL,
-            shloka_count INTEGER DEFAULT 0,
-            FOREIGN KEY (parva_number) REFERENCES parvas(number) ON DELETE CASCADE
+            shloka_count INTEGER NOT NULL DEFAULT 0,
+            FOREIGN KEY (parva_number) REFERENCES parvas(number) ON UPDATE NO ACTION ON DELETE CASCADE
         )
     """)
-    
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_chapter_parva_number ON chapters(parva_number)")
+
     # 3. Shlokas table
     cur.execute("""
         CREATE TABLE IF NOT EXISTS shlokas (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
             parva_number INTEGER NOT NULL,
             chapter_number INTEGER NOT NULL,
             verse_number INTEGER NOT NULL,
@@ -68,15 +68,12 @@ def init_database(db_path: str):
             sanskrit_iast TEXT NOT NULL,
             translation_hindi TEXT NOT NULL,
             translation_english TEXT NOT NULL,
-            FOREIGN KEY (parva_number) REFERENCES parvas(number) ON DELETE CASCADE
+            FOREIGN KEY (parva_number) REFERENCES parvas(number) ON UPDATE NO ACTION ON DELETE CASCADE
         )
     """)
-    
-    # Create indexes for rapid querying
-    cur.execute("CREATE INDEX IF NOT EXISTS idx_chapter_parva_number ON chapters(parva_number)")
     cur.execute("CREATE INDEX IF NOT EXISTS idx_shloka_parva_chapter ON shlokas(parva_number, chapter_number)")
     cur.execute("CREATE INDEX IF NOT EXISTS idx_shloka_verse_tag ON shlokas(verse_tag)")
-    
+
     # 4. FTS5 Virtual Table for Instant Multilingual Search
     cur.execute("""
         CREATE VIRTUAL TABLE IF NOT EXISTS shlokas_fts USING fts5 (
@@ -89,38 +86,46 @@ def init_database(db_path: str):
             content_rowid='id'
         )
     """)
-    
-    # FTS Triggers to keep search index synchronized
     cur.execute("""
         CREATE TRIGGER IF NOT EXISTS shlokas_ai AFTER INSERT ON shlokas BEGIN
             INSERT INTO shlokas_fts(rowid, verse_tag, sanskrit_devanagari, sanskrit_iast, translation_hindi, translation_english)
             VALUES (new.id, new.verse_tag, new.sanskrit_devanagari, new.sanskrit_iast, new.translation_hindi, new.translation_english);
         END;
     """)
-    
+
     # 5. Bookmarks table
     cur.execute("""
         CREATE TABLE IF NOT EXISTS bookmarks (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
             shloka_id INTEGER NOT NULL,
-            collection_name TEXT DEFAULT 'Favorites',
+            collection_name TEXT NOT NULL DEFAULT 'Favorites',
             user_note TEXT,
             created_at INTEGER NOT NULL,
-            FOREIGN KEY (shloka_id) REFERENCES shlokas(id) ON DELETE CASCADE
+            FOREIGN KEY (shloka_id) REFERENCES shlokas(id) ON UPDATE NO ACTION ON DELETE CASCADE
         )
     """)
     cur.execute("CREATE INDEX IF NOT EXISTS idx_bookmark_shloka_id ON bookmarks(shloka_id)")
-    
+
     # 6. Reading History / Resume Table
     cur.execute("""
         CREATE TABLE IF NOT EXISTS reading_history (
-            parva_number INTEGER PRIMARY KEY,
+            parva_number INTEGER NOT NULL,
             last_chapter_number INTEGER NOT NULL,
             last_verse_number INTEGER NOT NULL,
-            scroll_offset INTEGER DEFAULT 0,
-            updated_at INTEGER NOT NULL
+            scroll_offset INTEGER NOT NULL DEFAULT 0,
+            updated_at INTEGER NOT NULL,
+            PRIMARY KEY(parva_number)
         )
     """)
+
+    # 7. Room Master Table for Pre-packaged Schema Validation
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS room_master_table (
+            id INTEGER PRIMARY KEY,
+            identity_hash TEXT
+        )
+    """)
+    cur.execute("INSERT OR REPLACE INTO room_master_table (id, identity_hash) VALUES (42, 'df3c175abb9c1c67a74cb040896b52f7')")
     
     conn.commit()
     return conn

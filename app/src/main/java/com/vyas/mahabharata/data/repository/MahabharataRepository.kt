@@ -50,6 +50,11 @@ interface MahabharataRepository {
     fun getReadingHistory(parvaNumber: Int): Flow<ReadingHistory?>
 
     /**
+     * Observes all reading history records across all Parvas.
+     */
+    fun getAllReadingHistory(): Flow<List<ReadingHistory>>
+
+    /**
      * Saves or updates the last-read position for a Parva.
      */
     suspend fun saveReadingPosition(
