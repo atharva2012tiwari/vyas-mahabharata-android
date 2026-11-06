@@ -1,6 +1,17 @@
 package com.vyas.mahabharata.ui.screens.reader
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,31 +28,38 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Bookmark
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Translate
+import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -52,6 +70,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -63,15 +82,19 @@ import com.vyas.mahabharata.domain.model.Shloka
 import com.vyas.mahabharata.ui.components.QuoteExportDialog
 import com.vyas.mahabharata.ui.components.ShlokaCard
 import com.vyas.mahabharata.ui.screens.explorer.ChapterSelectorSheet
+import com.vyas.mahabharata.ui.theme.AccentGold
+import com.vyas.mahabharata.ui.theme.AccentPeacock
 import com.vyas.mahabharata.ui.theme.AccentSaffron
+import com.vyas.mahabharata.ui.theme.ExpressiveAsymmetricBadge
+import com.vyas.mahabharata.ui.theme.ExpressivePillShape
+import com.vyas.mahabharata.ui.theme.ExpressiveWisdomContainer
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 
 /**
- * Material 3 Expressive Spacious Reading Canvas
- * 1.8x line-height typography, 45-65 CPL measure constraint (max 600dp), 120Hz smooth scrolling,
- * auto-hiding floating toolbar, dynamic language toggling, bookmarking, and quote export.
+ * Pure Material 3 Expressive Bhagavad Gita Reading Canvas
+ * Continuous editorial typography without boxy cards, 1.8x line-height Devanagari,
+ * collapsible wisdom overview accordion, and tactile floating reader toolbar.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -102,26 +125,26 @@ fun ReadingCanvasScreen(
     var showHindi by remember { mutableStateOf(true) }
     var showEnglish by remember { mutableStateOf(true) }
 
-    // Dynamic typography scale: standard (20sp/36sp) vs large (24sp/43.2sp)
-    // Reader settings dialog state
+    // Dialog & bottom sheet states
     var showSettingsDialog by remember { mutableStateOf(false) }
-
-    // Quote export dialog state
     var quoteExportShloka by remember { mutableStateOf<Shloka?>(null) }
-
-    // Chapter selector bottom sheet state
     var showChapterSheet by remember { mutableStateOf(false) }
 
-    // Restoration flag to prevent race conditions during initial scroll position resume
+    // Restoration flag to prevent scroll bounce on open
     var hasRestoredPosition by remember { mutableStateOf(false) }
 
-    // Restore saved reading position or scroll to initial target verse on chapter open
+    // Floating toolbar auto-hide state on scroll
+    var isFloatingBarVisible by remember { mutableStateOf(true) }
+    var previousIndex by remember { mutableIntStateOf(0) }
+    var previousScrollOffset by remember { mutableIntStateOf(0) }
+
+    // Restore saved reading position or scroll to initial target verse
     LaunchedEffect(shlokas, readingHistory, initialVerse) {
         if (!hasRestoredPosition && shlokas.isNotEmpty()) {
             if (initialVerse > 0) {
                 val targetIndex = shlokas.indexOfFirst { it.verseNumber == initialVerse }
                 if (targetIndex >= 0) {
-                    val targetItem = targetIndex + 1
+                    val targetItem = targetIndex + 2 // +2 accounts for chapter header and wisdom accordion
                     listState.scrollToItem(targetItem, 0)
                 }
             } else {
@@ -129,7 +152,7 @@ fun ReadingCanvasScreen(
                 if (history != null && history.lastChapterNumber == chapterNumber) {
                     val targetIndex = shlokas.indexOfFirst { it.verseNumber == history.lastVerseNumber }
                     if (targetIndex >= 0) {
-                        val targetItem = targetIndex + 1
+                        val targetItem = targetIndex + 2
                         listState.scrollToItem(targetItem, history.scrollOffset)
                     }
                 }
@@ -138,13 +161,14 @@ fun ReadingCanvasScreen(
         }
     }
 
-    // Persist reading position smoothly on scroll
+    // Persist reading position and calculate dynamic toolbar visibility
     LaunchedEffect(listState) {
         snapshotFlow { listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset }
             .distinctUntilChanged()
             .collect { (currentIndex, currentOffset) ->
+                // Save position
                 if (hasRestoredPosition && shlokas.isNotEmpty()) {
-                    val shlokaIndex = (currentIndex - 1).coerceAtLeast(0)
+                    val shlokaIndex = (currentIndex - 2).coerceAtLeast(0)
                     if (shlokaIndex in shlokas.indices) {
                         val currentVerse = shlokas[shlokaIndex].verseNumber
                         repository.saveReadingPosition(
@@ -155,6 +179,27 @@ fun ReadingCanvasScreen(
                         )
                     }
                 }
+
+                // Smooth toolbar auto-hide on downward scroll
+                val isScrollingDown = when {
+                    currentIndex > previousIndex -> true
+                    currentIndex < previousIndex -> false
+                    else -> currentOffset > previousScrollOffset + 12
+                }
+                val isScrollingUp = when {
+                    currentIndex < previousIndex -> true
+                    currentIndex > previousIndex -> false
+                    else -> currentOffset < previousScrollOffset - 12
+                }
+
+                if (isScrollingDown && isFloatingBarVisible && currentIndex > 0) {
+                    isFloatingBarVisible = false
+                } else if (isScrollingUp && !isFloatingBarVisible) {
+                    isFloatingBarVisible = true
+                }
+
+                previousIndex = currentIndex
+                previousScrollOffset = currentOffset
             }
     }
 
@@ -164,13 +209,13 @@ fun ReadingCanvasScreen(
                 title = {
                     Column {
                         Text(
-                            text = parva?.nameSanskrit ?: "महाभारत",
+                            text = "श्रीमद्भगवद्गीता",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            text = "अध्याय $chapterNumber: ${currentChapter?.titleSanskrit ?: ""}",
+                            text = "अध्याय $chapterNumber : ${currentChapter?.titleSanskrit ?: parva?.nameSanskrit ?: ""}",
                             style = MaterialTheme.typography.labelSmall,
                             color = AccentSaffron
                         )
@@ -188,22 +233,15 @@ fun ReadingCanvasScreen(
                 actions = {
                     IconButton(onClick = { showSettingsDialog = true }) {
                         Icon(
-                            imageVector = Icons.Filled.Settings,
-                            contentDescription = "Reading Settings",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    IconButton(onClick = { showChapterSheet = true }) {
-                        Icon(
-                            imageVector = Icons.Filled.List,
-                            contentDescription = "All Chapters",
+                            imageVector = Icons.Filled.Translate,
+                            contentDescription = "Language Settings",
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                     IconButton(onClick = onNavigateToSearch) {
                         Icon(
                             imageVector = Icons.Filled.Search,
-                            contentDescription = "Search",
+                            contentDescription = "Search Verses",
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
@@ -228,26 +266,35 @@ fun ReadingCanvasScreen(
                 .padding(innerPadding),
             contentAlignment = Alignment.TopCenter
         ) {
-            // LazyColumn providing 120Hz smooth scrolling, centered with max 600dp constraint
+            // LazyColumn providing 120Hz smooth scrolling, centered with max 640dp constraint
             LazyColumn(
                 state = listState,
                 modifier = Modifier
-                    .widthIn(max = 600.dp) // 45–65 CPL Measure Constraint
+                    .widthIn(max = 640.dp)
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                contentPadding = PaddingValues(top = 16.dp, bottom = 32.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                    .padding(horizontal = 20.dp),
+                contentPadding = PaddingValues(top = 16.dp, bottom = 120.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                // Chapter Header
+                // 1. CHAPTER HEADER BANNER
                 item(key = "chapter_header") {
                     ChapterHeaderBanner(
-                        parva = parva,
                         chapter = currentChapter,
-                        chapterNumber = chapterNumber
+                        parva = parva,
+                        chapterNumber = chapterNumber,
+                        shlokaCount = shlokas.size
                     )
                 }
 
-                // Shloka Cards
+                // 2. EXPANDABLE WISDOM ACCORDION (Chapter Overview & Context)
+                item(key = "chapter_wisdom_accordion") {
+                    ChapterWisdomAccordion(
+                        summaryHindi = parva?.summaryHindi,
+                        summaryEnglish = parva?.summaryEnglish
+                    )
+                }
+
+                // 3. EDITORIAL SHLOKA PASSAGES (Expansive, clutter-free reading canvas)
                 items(
                     items = shlokas,
                     key = { it.id }
@@ -269,15 +316,49 @@ fun ReadingCanvasScreen(
                     )
                 }
 
-                // Chapter Navigation Footer (Previous / Next Chapter)
+                // 4. CHAPTER NAVIGATION FOOTER (Previous / Next Chapter Large CTAs)
                 item(key = "chapter_navigation_footer") {
                     ChapterNavigationFooter(
-                        parvaNumber = parvaNumber,
                         chapterNumber = chapterNumber,
-                        totalChapters = chapters.size,
-                        onSelectChapter = onNavigateToChapter
+                        totalChapters = 18,
+                        onSelectChapter = { nextChapter ->
+                            onNavigateToChapter(nextChapter, nextChapter)
+                        }
                     )
                 }
+            }
+
+            // 5. TACTILE FLOATING BOTTOM PILL BAR
+            AnimatedVisibility(
+                visible = isFloatingBarVisible,
+                enter = slideInVertically(
+                    initialOffsetY = { it * 2 },
+                    animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
+                ) + fadeIn(),
+                exit = slideOutVertically(
+                    targetOffsetY = { it * 2 },
+                    animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
+                ) + fadeOut(),
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 20.dp)
+            ) {
+                FloatingReaderBar(
+                    chapterNumber = chapterNumber,
+                    totalChapters = 18,
+                    onOpenSettings = { showSettingsDialog = true },
+                    onOpenChapterSheet = { showChapterSheet = true },
+                    onPreviousChapter = {
+                        if (chapterNumber > 1) {
+                            onNavigateToChapter(chapterNumber - 1, chapterNumber - 1)
+                        }
+                    },
+                    onNextChapter = {
+                        if (chapterNumber < 18) {
+                            onNavigateToChapter(chapterNumber + 1, chapterNumber + 1)
+                        }
+                    }
+                )
             }
         }
     }
@@ -313,7 +394,7 @@ fun ReadingCanvasScreen(
     quoteExportShloka?.let { shloka ->
         QuoteExportDialog(
             shloka = shloka,
-            parvaName = parva?.nameEnglish ?: "Mahabharata",
+            parvaName = "श्रीमद्भगवद्गीता",
             onDismissRequest = { quoteExportShloka = null }
         )
     }
@@ -333,7 +414,332 @@ fun ReadingCanvasScreen(
 }
 
 /**
- * Clean Reading Settings Dialog for toggling script and translations.
+ * Expressive Collapsible Wisdom Accordion (Chapter Overview)
+ */
+@Composable
+private fun ChapterWisdomAccordion(
+    summaryHindi: String?,
+    summaryEnglish: String?
+) {
+    if (summaryHindi.isNullOrBlank() && summaryEnglish.isNullOrBlank()) return
+
+    var isExpanded by remember { mutableStateOf(false) }
+
+    Card(
+        shape = ExpressiveWisdomContainer,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 12.dp)
+            .clip(ExpressiveWisdomContainer)
+            .clickable { isExpanded = !isExpanded }
+            .animateContentSize(
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioLowBouncy,
+                    stiffness = Spring.StiffnessMediumLow
+                )
+            )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 16.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(34.dp)
+                            .clip(CircleShape)
+                            .background(AccentSaffron.copy(alpha = 0.15f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "ॐ",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = AccentSaffron
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(12.dp))
+
+                    Column {
+                        Text(
+                            text = "अध्याय परिचय • Overview",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        if (!isExpanded) {
+                            Text(
+                                text = "अध्याय का सारांश पढ़ने के लिए स्पर्श करें",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+
+                Icon(
+                    imageVector = if (isExpanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+                    contentDescription = if (isExpanded) "Collapse" else "Expand",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            AnimatedVisibility(
+                visible = isExpanded,
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically()
+            ) {
+                Column(modifier = Modifier.padding(top = 16.dp)) {
+                    HorizontalDivider(
+                        thickness = 0.5.dp,
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
+                    )
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    if (!summaryHindi.isNullOrBlank()) {
+                        Text(
+                            text = summaryHindi,
+                            style = MaterialTheme.typography.bodyMedium.copy(lineHeight = 26.sp),
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+
+                    if (!summaryEnglish.isNullOrBlank()) {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = summaryEnglish,
+                            style = MaterialTheme.typography.bodySmall.copy(lineHeight = 22.sp),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Tactile Floating Reader Bottom Pill Bar
+ */
+@Composable
+private fun FloatingReaderBar(
+    chapterNumber: Int,
+    totalChapters: Int,
+    onOpenSettings: () -> Unit,
+    onOpenChapterSheet: () -> Unit,
+    onPreviousChapter: () -> Unit,
+    onNextChapter: () -> Unit
+) {
+    Surface(
+        shape = ExpressivePillShape,
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        tonalElevation = 6.dp,
+        shadowElevation = 8.dp,
+        modifier = Modifier
+            .shadow(10.dp, ExpressivePillShape)
+            .clip(ExpressivePillShape)
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            // Previous Chapter quick step
+            IconButton(
+                onClick = onPreviousChapter,
+                enabled = chapterNumber > 1,
+                modifier = Modifier.size(44.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Previous Chapter",
+                    tint = if (chapterNumber > 1) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+
+            // Chapter Selector Pill
+            Button(
+                onClick = onOpenChapterSheet,
+                shape = ExpressivePillShape,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                ),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                modifier = Modifier.height(44.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.List,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = "अध्याय $chapterNumber",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            // Language Settings Pill
+            IconButton(
+                onClick = onOpenSettings,
+                modifier = Modifier.size(44.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Translate,
+                    contentDescription = "Languages",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+
+            // Next Chapter quick step
+            IconButton(
+                onClick = onNextChapter,
+                enabled = chapterNumber < totalChapters,
+                modifier = Modifier.size(44.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                    contentDescription = "Next Chapter",
+                    tint = if (chapterNumber < totalChapters) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Editorial Chapter Header Banner
+ */
+@Composable
+private fun ChapterHeaderBanner(
+    chapter: Chapter?,
+    parva: Parva?,
+    chapterNumber: Int,
+    shlokaCount: Int
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 12.dp, bottom = 8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "॥ श्रीपरमात्मने नमः ॥",
+            style = MaterialTheme.typography.labelMedium,
+            color = AccentSaffron,
+            letterSpacing = 3.sp,
+            fontWeight = FontWeight.Bold
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Text(
+            text = "अध्याय $chapterNumber",
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.ExtraBold,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+
+        val titleSanskrit = chapter?.titleSanskrit ?: parva?.nameSanskrit ?: ""
+        if (titleSanskrit.isNotBlank()) {
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = titleSanskrit,
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary,
+                textAlign = TextAlign.Center
+            )
+        }
+
+        val titleEnglish = chapter?.titleEnglish ?: parva?.nameEnglish ?: ""
+        if (titleEnglish.isNotBlank()) {
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "$titleEnglish • $shlokaCount श्लोक",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
+            )
+        }
+    }
+}
+
+/**
+ * Chapter Navigation Footer with large 54dp Expressive Pill CTAs
+ */
+@Composable
+private fun ChapterNavigationFooter(
+    chapterNumber: Int,
+    totalChapters: Int,
+    onSelectChapter: (Int) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 32.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        if (chapterNumber > 1) {
+            OutlinedButton(
+                onClick = { onSelectChapter(chapterNumber - 1) },
+                shape = ExpressivePillShape,
+                modifier = Modifier
+                    .weight(1f)
+                    .height(52.dp)
+            ) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("अध्याय ${chapterNumber - 1}", fontWeight = FontWeight.Bold)
+            }
+        } else {
+            Spacer(modifier = Modifier.weight(1f))
+        }
+
+        Spacer(modifier = Modifier.width(16.dp))
+
+        if (chapterNumber < totalChapters) {
+            Button(
+                onClick = { onSelectChapter(chapterNumber + 1) },
+                shape = ExpressivePillShape,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                ),
+                modifier = Modifier
+                    .weight(1f)
+                    .height(52.dp)
+            ) {
+                Text("अध्याय ${chapterNumber + 1}", fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.width(8.dp))
+                Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(18.dp))
+            }
+        } else {
+            Spacer(modifier = Modifier.weight(1f))
+        }
+    }
+}
+
+/**
+ * Clean Reading Settings Dialog
  */
 @Composable
 private fun ReaderSettingsDialog(
@@ -351,22 +757,22 @@ private fun ReaderSettingsDialog(
 
     androidx.compose.material3.AlertDialog(
         onDismissRequest = onDismissRequest,
-        shape = RoundedCornerShape(24.dp),
+        shape = RoundedCornerShape(28.dp),
         title = {
             Text(
                 text = "पठन विन्यास • Reading Settings",
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
             )
         },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(
-                    text = "अनुवाद एवं भाषा प्रदर्शन (Languages & Translations):",
+                    text = "अनुवाद एवं भाषाएं (Languages & Translations):",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(6.dp))
 
                 Row(
                     modifier = Modifier
@@ -375,13 +781,13 @@ private fun ReaderSettingsDialog(
                         .padding(vertical = 4.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    androidx.compose.material3.Checkbox(
+                    Checkbox(
                         checked = showSanskrit,
                         onCheckedChange = { onToggleSanskrit() },
                         enabled = activeCount > 1 || !showSanskrit
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("संस्कृत श्लोक (Devanagari)", style = MaterialTheme.typography.bodyMedium)
+                    Text("संस्कृत श्लोक (Devanagari)", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
                 }
 
                 Row(
@@ -391,7 +797,7 @@ private fun ReaderSettingsDialog(
                         .padding(vertical = 4.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    androidx.compose.material3.Checkbox(
+                    Checkbox(
                         checked = showIAST,
                         onCheckedChange = { onToggleIAST() },
                         enabled = activeCount > 1 || !showIAST
@@ -407,7 +813,7 @@ private fun ReaderSettingsDialog(
                         .padding(vertical = 4.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    androidx.compose.material3.Checkbox(
+                    Checkbox(
                         checked = showHindi,
                         onCheckedChange = { onToggleHindi() },
                         enabled = activeCount > 1 || !showHindi
@@ -423,7 +829,7 @@ private fun ReaderSettingsDialog(
                         .padding(vertical = 4.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    androidx.compose.material3.Checkbox(
+                    Checkbox(
                         checked = showEnglish,
                         onCheckedChange = { onToggleEnglish() },
                         enabled = activeCount > 1 || !showEnglish
@@ -434,100 +840,12 @@ private fun ReaderSettingsDialog(
             }
         },
         confirmButton = {
-            androidx.compose.material3.TextButton(onClick = onDismissRequest) {
-                Text("सम्पूर्ण • Done")
+            Button(
+                onClick = onDismissRequest,
+                shape = ExpressivePillShape
+            ) {
+                Text("पूर्ण • Done")
             }
         }
     )
-}
-
-@Composable
-private fun ChapterHeaderBanner(
-    parva: Parva?,
-    chapter: Chapter?,
-    chapterNumber: Int
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 12.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = "॥ श्रीपरमात्मने नमः ॥",
-            style = MaterialTheme.typography.labelMedium,
-            color = AccentSaffron,
-            letterSpacing = 2.sp
-        )
-
-        Spacer(modifier = Modifier.height(10.dp))
-
-        Text(
-            text = "अध्याय $chapterNumber",
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-
-        if (chapter != null && chapter.titleSanskrit.isNotBlank()) {
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = chapter.titleSanskrit,
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.primary,
-                textAlign = TextAlign.Center
-            )
-        }
-
-        if (chapter != null && chapter.titleEnglish.isNotBlank()) {
-            Spacer(modifier = Modifier.height(2.dp))
-            Text(
-                text = chapter.titleEnglish,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
-            )
-        }
-    }
-}
-
-@Composable
-private fun ChapterNavigationFooter(
-    parvaNumber: Int,
-    chapterNumber: Int,
-    totalChapters: Int,
-    onSelectChapter: (parvaNumber: Int, chapterNumber: Int) -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 24.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        if (chapterNumber > 1) {
-            OutlinedButton(
-                onClick = { onSelectChapter(parvaNumber, chapterNumber - 1) },
-                shape = RoundedCornerShape(20.dp)
-            ) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, modifier = Modifier.size(16.dp))
-                Spacer(modifier = Modifier.width(6.dp))
-                Text("अध्याय ${chapterNumber - 1}")
-            }
-        } else {
-            Spacer(modifier = Modifier.width(1.dp))
-        }
-
-        if (totalChapters > 0 && chapterNumber < totalChapters) {
-            FilledTonalButton(
-                onClick = { onSelectChapter(parvaNumber, chapterNumber + 1) },
-                shape = RoundedCornerShape(20.dp)
-            ) {
-                Text("अध्याय ${chapterNumber + 1}")
-                Spacer(modifier = Modifier.width(6.dp))
-                Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(16.dp))
-            }
-        }
-    }
 }

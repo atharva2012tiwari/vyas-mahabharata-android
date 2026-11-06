@@ -34,14 +34,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.vyas.mahabharata.domain.model.Chapter
 import com.vyas.mahabharata.domain.model.Parva
+import com.vyas.mahabharata.ui.theme.AccentPeacock
 import com.vyas.mahabharata.ui.theme.AccentSaffron
+import com.vyas.mahabharata.ui.theme.ExpressiveAsymmetricBadge
 
 /**
  * Material 3 Expressive Chapter Selector Modal Sheet
- * Provides streamlined chapter discovery and navigation intent dispatching to the Reading Canvas.
+ * Provides streamlined chapter discovery across all 18 Chapters of the Bhagavad Gita.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -61,11 +62,11 @@ fun ChapterSelectorSheet(
     ) {
         Column(
             modifier = Modifier
-                .widthIn(max = 600.dp)
+                .widthIn(max = 640.dp)
                 .fillMaxWidth()
-                .padding(top = 16.dp, bottom = 24.dp)
+                .padding(top = 16.dp, bottom = 28.dp)
         ) {
-            // Header: Parva metadata and close action
+            // Header: Gita metadata and close action
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -75,22 +76,22 @@ fun ChapterSelectorSheet(
             ) {
                 Column {
                     Text(
-                        text = "${parva.number}. ${parva.nameSanskrit} (${parva.nameEnglish})",
+                        text = "श्रीमद्भगवद्गीता • अध्याय सूची",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = "${chapters.size} Chapters • ${parva.shlokaCount} Verses",
+                        text = "18 Chapters • 700 Verses",
                         style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = AccentSaffron
                     )
                 }
 
                 IconButton(
                     onClick = onDismissRequest,
-                    modifier = Modifier.size(36.dp)
+                    modifier = Modifier.size(38.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Filled.Close,
@@ -141,19 +142,24 @@ private fun ChapterListItem(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.weight(1f)
         ) {
-            // Chapter index tag pill
+            // Vivid Asymmetric Chapter Number Tag
+            val formattedNumber = if (chapter.chapterNumber < 10) "0${chapter.chapterNumber}" else "${chapter.chapterNumber}"
+            val isOdd = chapter.chapterNumber % 2 == 1
             Box(
                 modifier = Modifier
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(MaterialTheme.colorScheme.surfaceContainerHighest)
-                    .padding(horizontal = 12.dp, vertical = 6.dp),
+                    .size(46.dp)
+                    .clip(ExpressiveAsymmetricBadge)
+                    .background(
+                        if (isOdd) AccentSaffron.copy(alpha = 0.15f)
+                        else AccentPeacock.copy(alpha = 0.15f)
+                    ),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "${chapter.chapterNumber}",
+                    text = formattedNumber,
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
+                    fontWeight = FontWeight.ExtraBold,
+                    color = if (isOdd) AccentSaffron else AccentPeacock
                 )
             }
 
@@ -164,7 +170,7 @@ private fun ChapterListItem(
                 Text(
                     text = chapter.titleSanskrit,
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
+                    fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 if (chapter.titleEnglish.isNotBlank() && chapter.titleEnglish != chapter.titleSanskrit) {
@@ -177,9 +183,9 @@ private fun ChapterListItem(
                 }
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    text = "${chapter.shlokaCount} श्लोकाः (${chapter.shlokaCount} verses)",
+                    text = "${chapter.shlokaCount} श्लोक (${chapter.shlokaCount} verses)",
                     style = MaterialTheme.typography.labelSmall,
-                    color = AccentSaffron
+                    color = if (isOdd) AccentSaffron else AccentPeacock
                 )
             }
         }

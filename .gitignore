@@ -13,3 +13,6 @@ local.properties
 .agents/
 *.apk
 *.aab
+__pycache__/
+*.pyc
+.git_token

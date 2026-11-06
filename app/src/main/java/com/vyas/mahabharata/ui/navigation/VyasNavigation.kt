@@ -68,8 +68,8 @@ fun VyasNavHost(
         ) {
             ParvaExplorerScreen(
                 repository = repository,
-                onNavigateToChapter = { parvaNum, chNum ->
-                    navController.navigate(Screen.Reader.createRoute(parvaNum, chNum))
+                onNavigateToChapter = { chapterNum, verseNum ->
+                    navController.navigate(Screen.Reader.createRoute(chapterNum, chapterNum, verseNum))
                 },
                 onNavigateToSearch = {
                     navController.navigate(Screen.Search.route)

@@ -201,7 +201,7 @@ private fun BookmarkItemCard(
                     if (bookmark.shloka != null) {
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "पर्व ${bookmark.shloka.parvaNumber} • अध्याय ${bookmark.shloka.chapterNumber} • श्लोक ${bookmark.shloka.verseNumber}",
+                            text = "अध्याय ${bookmark.shloka.chapterNumber} • श्लोक ${bookmark.shloka.verseNumber}",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.primary
                         )

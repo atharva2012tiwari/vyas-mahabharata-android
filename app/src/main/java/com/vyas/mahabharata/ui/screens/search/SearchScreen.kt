@@ -83,7 +83,7 @@ fun SearchScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "श्लोक अन्वेषण • Epic Search",
+                        text = "श्लोक खोज • Search Gita",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -275,7 +275,7 @@ private fun SearchResultCard(
                         .padding(horizontal = 8.dp, vertical = 3.dp)
                 ) {
                     Text(
-                        text = "पर्व ${result.shloka.parvaNumber} • अध्याय ${result.shloka.chapterNumber} • श्लोक ${result.shloka.verseNumber}",
+                        text = "अध्याय ${result.shloka.chapterNumber} • श्लोक ${result.shloka.verseNumber}",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.primary
                     )

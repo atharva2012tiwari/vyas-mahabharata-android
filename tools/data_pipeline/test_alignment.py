@@ -23,12 +23,12 @@ def test_database_integrity():
     parva_count = cur.fetchone()[0]
     assert parva_count == 18, f"Expected 18 Parvas, found {parva_count}"
     
-    # 2. Test Parva details
+    # 2. Test Gita Chapter details
     cur.execute("SELECT number, name_sanskrit, name_english FROM parvas ORDER BY number ASC")
     parvas = cur.fetchall()
-    assert parvas[0][0] == 1 and "आदिपर्व" in parvas[0][1]
-    assert parvas[5][0] == 6 and "भीष्मपर्व" in parvas[5][1]
-    assert parvas[17][0] == 18 and "स्वर्गारोहणपर्व" in parvas[17][1]
+    assert parvas[0][0] == 1 and "अर्जुनविषादयोगः" in parvas[0][1]
+    assert parvas[1][0] == 2 and "सांख्ययोगः" in parvas[1][1]
+    assert parvas[17][0] == 18 and "मोक्षसंन्यासयोगः" in parvas[17][1]
     
     # 3. Test Shlokas completeness
     cur.execute("SELECT id, verse_tag, sanskrit_devanagari, sanskrit_iast, translation_hindi, translation_english FROM shlokas")
@@ -37,7 +37,7 @@ def test_database_integrity():
     
     for s in shlokas:
         sid, tag, skt, iast, hin, eng = s
-        assert len(tag.split(".")) == 3, f"Invalid verse tag: {tag}"
+        assert len(tag.split(".")) >= 2, f"Invalid verse tag: {tag}"
         assert len(skt.strip()) > 0, f"Empty Sanskrit in verse {tag}"
         assert len(iast.strip()) > 0, f"Empty IAST in verse {tag}"
         assert len(hin.strip()) > 0, f"Empty Hindi in verse {tag}"
@@ -45,12 +45,11 @@ def test_database_integrity():
         
     # 4. Test FTS5 Search queries & benchmark latency
     test_queries = [
-        "Narayana",
         "धर्मक्षेत्रे",
-        "Duryodhana",
-        "भीमार्जुनसमा",
-        "वैशम्पायन",
-        "Kurukshetra"
+        "कर्मण्येवाधिकारस्ते",
+        "यदा यदा हि",
+        "अश्वत्थं",
+        "योगेश्वरः"
     ]
     
     for q in test_queries:

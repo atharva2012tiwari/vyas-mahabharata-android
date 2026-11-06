@@ -3,56 +3,57 @@ package com.vyas.mahabharata.ui.theme
 import androidx.compose.ui.graphics.Color
 
 // ==========================================
-// SACRED WARM PAPYRUS (DAY PALETTE)
-// Designed for visual calm, preventing glare
+// SACRED SAFFRON & ROYAL PEACOCK (DAY PALETTE)
+// Vibrant saffron primary with deep peacock blue accents
 // ==========================================
-val PapyrusSurface = Color(0xFFFBF8F2)
-val PapyrusOnSurface = Color(0xFF252528)
-val PapyrusOnSurfaceVariant = Color(0xFF5A5754)
-val PapyrusPrimary = Color(0xFF8F4C1B) // Terracotta Ochre
+val PapyrusSurface = Color(0xFFFDF8F0)
+val PapyrusOnSurface = Color(0xFF1E1A17)
+val PapyrusOnSurfaceVariant = Color(0xFF5E544C)
+val PapyrusPrimary = Color(0xFFD95D00) // Sacred Saffron
 val PapyrusOnPrimary = Color(0xFFFFFFFF)
 val PapyrusPrimaryContainer = Color(0xFFFFDBCB)
-val PapyrusOnPrimaryContainer = Color(0xFF341000)
+val PapyrusOnPrimaryContainer = Color(0xFF3B1200)
 
-val PapyrusSecondary = Color(0xFF755846)
+val PapyrusSecondary = Color(0xFF026670) // Royal Peacock Blue
 val PapyrusOnSecondary = Color(0xFFFFFFFF)
-val PapyrusSecondaryContainer = Color(0xFFFFDBCB)
-val PapyrusOnSecondaryContainer = Color(0xFF2B1609)
+val PapyrusSecondaryContainer = Color(0xFFB8EAEE)
+val PapyrusOnSecondaryContainer = Color(0xFF001F24)
 
 // M3 Expressive Tonal Containers (Warm Sand Tones)
 val PapyrusContainerLowest = Color(0xFFFFFFFF)
-val PapyrusContainerLow = Color(0xFFF5EFE6)
-val PapyrusContainer = Color(0xFFEFE8DE)
-val PapyrusContainerHigh = Color(0xFFE9E2D7)
-val PapyrusContainerHighest = Color(0xFFE3DCD0)
+val PapyrusContainerLow = Color(0xFFF7F1E8)
+val PapyrusContainer = Color(0xFFF1EAE0)
+val PapyrusContainerHigh = Color(0xFFEBE3D7)
+val PapyrusContainerHighest = Color(0xFFE5DDCE)
 
 // ==========================================
-// DARK ESPRESSO AMBER (NIGHT PALETTE)
-// Deep roasted tones without harsh OLED black
+// DARK MONASTIC ESPRESSO (NIGHT PALETTE)
+// Deep warm night palette with peacock cyan highlights
 // ==========================================
-val EspressoSurface = Color(0xFF1B1917)
-val EspressoOnSurface = Color(0xFFEAE4DC)
-val EspressoOnSurfaceVariant = Color(0xFFCCC4BC)
-val EspressoPrimary = Color(0xFFE08A42) // Radiant Amber
-val EspressoOnPrimary = Color(0xFF451F00)
-val EspressoPrimaryContainer = Color(0xFF673204)
+val EspressoSurface = Color(0xFF181512)
+val EspressoOnSurface = Color(0xFFEDE5DC)
+val EspressoOnSurfaceVariant = Color(0xFFD2C5B9)
+val EspressoPrimary = Color(0xFFFF8A50) // Radiant Night Saffron
+val EspressoOnPrimary = Color(0xFF4E1A00)
+val EspressoPrimaryContainer = Color(0xFF712A00)
 val EspressoOnPrimaryContainer = Color(0xFFFFDBCB)
 
-val EspressoSecondary = Color(0xFFE5BEA9)
-val EspressoOnSecondary = Color(0xFF422B1C)
-val EspressoSecondaryContainer = Color(0xFF5B4130)
-val EspressoOnSecondaryContainer = Color(0xFFFFDBCB)
+val EspressoSecondary = Color(0xFF48C3CB) // Radiant Peacock Cyan
+val EspressoOnSecondary = Color(0xFF00363B)
+val EspressoSecondaryContainer = Color(0xFF004F56)
+val EspressoOnSecondaryContainer = Color(0xFFB8EAEE)
 
 // M3 Expressive Tonal Containers (Night Tones)
-val EspressoContainerLowest = Color(0xFF141210)
-val EspressoContainerLow = Color(0xFF24211E)
-val EspressoContainer = Color(0xFF2D2925)
-val EspressoContainerHigh = Color(0xFF383430)
-val EspressoContainerHighest = Color(0xFF443F3A)
+val EspressoContainerLowest = Color(0xFF110E0C)
+val EspressoContainerLow = Color(0xFF201D19)
+val EspressoContainer = Color(0xFF292520)
+val EspressoContainerHigh = Color(0xFF332F2A)
+val EspressoContainerHighest = Color(0xFF3F3A34)
 
 // Accent Colors for Speaker Quotes & Highlighting
-val AccentSaffron = Color(0xFFD97706)
-val AccentGold = Color(0xFFB45309)
-val AccentTeal = Color(0xFF0F766E)
-val DividerMuted = Color(0x1F000000)
-val DividerMutedNight = Color(0x1FFFFFFF)
+val AccentSaffron = Color(0xFFD95D00)
+val AccentGold = Color(0xFFE5A100)
+val AccentPeacock = Color(0xFF026670)
+val AccentTeal = Color(0xFF00838F)
+val DividerMuted = Color(0x14000000)
+val DividerMutedNight = Color(0x14FFFFFF)
