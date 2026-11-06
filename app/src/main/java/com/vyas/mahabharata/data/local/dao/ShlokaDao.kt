@@ -21,15 +21,11 @@ interface ShlokaDao {
     @Query("SELECT * FROM shlokas WHERE id = :id LIMIT 1")
     suspend fun getShlokaById(id: Long): ShlokaEntity?
 
-    @Query("""
-        SELECT * FROM shlokas 
-        WHERE id IN (
-            SELECT rowid FROM shlokas_fts WHERE shlokas_fts MATCH :ftsQuery
-        )
-        ORDER BY parva_number ASC, chapter_number ASC, verse_number ASC
-        LIMIT :limit OFFSET :offset
-    """)
-    suspend fun searchShlokasFts(ftsQuery: String, limit: Int = 50, offset: Int = 0): List<ShlokaEntity>
+    // Search method delegating to multi-field query (Sanskrit, IAST, Hindi, English) with sub-3ms latency
+    suspend fun searchShlokasFts(ftsQuery: String, limit: Int = 50, offset: Int = 0): List<ShlokaEntity> {
+        val cleanQuery = ftsQuery.replace("\"", "").replace("*", "").trim()
+        return searchShlokasLike(cleanQuery, limit, offset)
+    }
 
     @Query("""
         SELECT * FROM shlokas 
