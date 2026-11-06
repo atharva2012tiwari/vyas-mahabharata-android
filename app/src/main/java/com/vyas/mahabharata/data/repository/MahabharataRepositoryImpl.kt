@@ -85,7 +85,16 @@ class MahabharataRepositoryImpl(
             return@flow
         }
 
-        val entities = shlokaDao.searchShlokas(trimmed, limit = 100)
+        val ftsQuery = sanitizeFts5Query(trimmed)
+        val entities = if (ftsQuery.isNotBlank()) {
+            try {
+                shlokaDao.searchShlokasFts(ftsQuery, limit = 100)
+            } catch (e: Exception) {
+                shlokaDao.searchShlokasLike(trimmed, limit = 100)
+            }
+        } else {
+            shlokaDao.searchShlokasLike(trimmed, limit = 100)
+        }
         val searchResults = entities.map { entity ->
             val isBookmarked = bookmarkDao.isBookmarkedSync(entity.id)
             ShlokaSearchResult(

@@ -1,0 +1,502 @@
+[
+  {
+    "id": "Q1",
+    "domain_id": 1,
+    "domain_name": "Home Experience, Navigation & Hero Resume Architecture",
+    "title": "Cold Launch Start Destination vs. Procedural Welcome Screen Experience",
+    "question": "In VyasNavigation.kt, why is the root start destination hardcoded to Screen.Explorer.route ('explorer') instead of Screen.Welcome.route ('welcome'), effectively bypassing the procedural damped-spring ripple animation and calligraphic invocation shader on every cold launch unless an explicit navigation action occurs, and how should first-time onboarding be orchestrated using DataStore or SharedPreferences?",
+    "technical_context": "VyasNavigation.kt line 45 (NavHost startDestination = Screen.Explorer.route); WelcomeScreen.kt lines 60-150 (Procedural harmonic ripples Canvas and calligraphic shader inscription).",
+    "verification_methodology": "Inspect NavHost configuration during fresh app launch on Android emulator or physical device; observe whether WelcomeScreen is ever rendered without manual intent; verify whether a 'has_seen_welcome' preference flag exists.",
+    "severity_if_unaddressed": "High"
+  },
+  {
+    "id": "Q2",
+    "domain_id": 1,
+    "domain_name": "Home Experience, Navigation & Hero Resume Architecture",
+    "title": "Hero Resume Query Granularity & Identical Parva-Chapter Parameter Passing",
+    "question": "In ParvaExplorerScreen.kt, how does GitaHeroResumeSection determine the active reading chapter when reading_history is empty versus populated, and why does the CTA button pass resumeChapterNumber to both parvaNumber and chapterNumber in Screen.Reader.createRoute(chapterNum, chapterNum, verseNum), and what are the database implications if the underlying SQLite schema ever decouples Parvas from Chapters?",
+    "technical_context": "ParvaExplorerScreen.kt lines 75-80, 137-145, 192-284; VyasNavigation.kt lines 24-32, 71-73; MahabharataRepositoryImpl.kt line 71.",
+    "verification_methodology": "Execute fresh launch with empty database tables; verify default fallback to Chapter 1 Verse 1; trace route arguments through NavBackStackEntry and verify ShlokaDao.getShlokasForChapter(parvaNumber, chapterNumber) receives identical numbers.",
+    "severity_if_unaddressed": "Medium"
+  },
+  {
+    "id": "Q3",
+    "domain_id": 1,
+    "domain_name": "Home Experience, Navigation & Hero Resume Architecture",
+    "title": "Backstack State Accumulation & Memory Retention during Rapid Chapter Switching",
+    "question": "In VyasNavigation.kt and ReadingCanvasScreen.kt, when navigating between chapters via ChapterNavigationFooter or ChapterSelectorSheet using popUpTo(Screen.Reader.route) { inclusive = true }, does this pop the entire reader backstack cleanly, or does rapid sequential cycling through all 18 chapters cause composition state retention, leaked coroutine jobs, or unexpected back-button exit to the Android home screen rather than returning to Explorer?",
+    "technical_context": "VyasNavigation.kt lines 119-123; ReadingCanvasScreen.kt lines 324-327, 407-410; ChapterNavigationFooter lines 688-739.",
+    "verification_methodology": "Perform rapid sequential navigation across Chapters 1 through 18 using Compose UI Automator / Espresso; trigger system back press at Chapter 18 and assert that the user lands on ParvaExplorerScreen without activity finish or retained zombie state.",
+    "severity_if_unaddressed": "High"
+  },
+  {
+    "id": "Q4",
+    "domain_id": 1,
+    "domain_name": "Home Experience, Navigation & Hero Resume Architecture",
+    "title": "Wide-Display Measure Constraint Ordering on Home Explorer Canvas",
+    "question": "In ParvaExplorerScreen.kt line 130, LazyColumn specifies Modifier.widthIn(max = 640.dp).fillMaxWidth().padding(horizontal = 20.dp). Why was 640dp chosen over the canonical 600dp measure constraint specified in ORIGINAL_REQUEST.md, and how does the outer Box(contentAlignment = Alignment.TopCenter) guarantee perfect horizontal centering on unfolded foldables, tablets, and desktop Chromebook displays without constraint swallowing?",
+    "technical_context": "ParvaExplorerScreen.kt lines 122-135; ORIGINAL_REQUEST.md line 18 (45-65 CPL measure constraint, max-width 600dp); Compose constraint ordering semantics.",
+    "verification_methodology": "Render ParvaExplorerScreen on an 8.4-inch tablet or 1200dp wide desktop emulator; measure rendered card pixel width to verify clamping at 640dp (or 600dp) with equal left and right margins; verify that .widthIn precedes .fillMaxWidth.",
+    "severity_if_unaddressed": "Medium"
+  },
+  {
+    "id": "Q5",
+    "domain_id": 1,
+    "domain_name": "Home Experience, Navigation & Hero Resume Architecture",
+    "title": "Single-Tap Welcome Bypass Idempotence & Gesture Pointer Collision",
+    "question": "In WelcomeScreen.kt, the root Box captures pointer input via detectTapGestures(onTap = { handleBypass() }), which sets bypassed = true before triggering onEnterClick(). If a user multi-taps rapidly or performs a drag/fling gesture during the damped-spring ripple animation, does the idempotence guard completely prevent duplicate navigation actions or IllegalStateException in NavController, and does pointerInput swallow accessibility events for screen readers?",
+    "technical_context": "WelcomeScreen.kt lines 67-75, 126-133; detectTapGestures vs accessibility click semantics; NavController backstack popUpTo.",
+    "verification_methodology": "Simulate a burst of 10 simultaneous touch events on WelcomeScreen using multi-touch testing tools; inspect Logcat for NavController navigation collisions or double-pop crashes; verify TalkBack activation triggers navigation.",
+    "severity_if_unaddressed": "Medium"
+  },
+  {
+    "id": "Q6",
+    "domain_id": 2,
+    "domain_name": "Reading Canvas & Editorial Typography Engine (1.8x line-height ratio, clipping prevention)",
+    "title": "Mathematical Invariant of Devanagari 1.8x Line-Height Ratio across Font Scales",
+    "question": "In Type.kt, ScriptureSanskritStyle defines fontSize = 20.sp, lineHeight = 36.sp (ratio 1.800), ScriptureSanskritLargeStyle defines fontSize = 24.sp, lineHeight = 43.2.sp (ratio 1.800), and ScriptureSanskritDisplayStyle defines fontSize = 22.sp, lineHeight = 39.6.sp (ratio 1.800). How do these exact mathematical ratios guarantee that multi-tiered Devanagari conjuncts with top matras (aikara, repha, anusvara) and bottom matras (ukara, ri-kara, halanta) never vertically collide or clip across consecutive lines of Sanskrit verse?",
+    "technical_context": "Type.kt lines 27-55; Devanagari vertical glyph bounding boxes; FreeType / HarfBuzz text shaping metrics.",
+    "verification_methodology": "Calculate line-height to font-size ratio programmatically across all Sanskrit text style tokens; render dense multi-line verses containing stacked conjuncts (e.g., Gita Ch. 11.19, 11.25) at xxxhdpi and verify zero pixel overlap between descenders and ascenders.",
+    "severity_if_unaddressed": "Critical"
+  },
+  {
+    "id": "Q7",
+    "domain_id": 2,
+    "domain_name": "Reading Canvas & Editorial Typography Engine (1.8x line-height ratio, clipping prevention)",
+    "title": "Font Padding Elimination vs. LineHeightStyle Shirorekha-Matra Clipping Guard",
+    "question": "Type.kt configures DevanagariPlatformTextStyle with PlatformTextStyle(includeFontPadding = false) combined with DevanagariLineHeightStyle using LineHeightStyle(alignment = LineHeightStyle.Alignment.Center, trim = LineHeightStyle.Trim.None). Why is Trim.None strictly non-negotiable for Devanagari, and what catastrophic glyph clipping occurs on the topmost Shirorekha line or bottommost matras if Trim.FirstLineTop or Trim.Both is mistakenly applied when includeFontPadding is disabled?",
+    "technical_context": "Type.kt lines 18-25; Android TextView legacy font padding vs. Compose 1.7+ LineHeightStyle trim behavior; HarfBuzz glyph ascender metrics.",
+    "verification_methodology": "Execute screenshot comparison testing with Trim.None versus Trim.FirstLineTop on Gita verse 1.1; verify that upper vowel matras (े, ै, ं, र्) retain full vertical height without top-edge pixel clipping on line 1.",
+    "severity_if_unaddressed": "Critical"
+  },
+  {
+    "id": "Q8",
+    "domain_id": 2,
+    "domain_name": "Reading Canvas & Editorial Typography Engine (1.8x line-height ratio, clipping prevention)",
+    "title": "User-Facing Font Scaling Availability & System Accessibility Scaling Immunity",
+    "question": "ShlokaCard.kt implements dynamic large font scaling via isLargeFont: Boolean = false (switching from 20sp/36sp to 24sp/43.2sp), but does ReadingCanvasScreen.kt expose any UI affordance (such as a text size icon in the top app bar or floating toolbar) to toggle isLargeFont, and when a user activates Android system-level accessibility font scaling (e.g., 1.5x or 2.0x in OS settings), does Compose scale lineHeight proportionally with fontSize to preserve the 1.8x ratio?",
+    "technical_context": "ShlokaCard.kt lines 61, 72-76; ReadingCanvasScreen.kt lines 208-259, 298-317; Android TextUnit.sp dynamic accessibility scaling.",
+    "verification_methodology": "Audit ReadingCanvasScreen.kt for references to isLargeFont; verify whether the state is ever toggled; enable 200% font scaling in Android OS Developer Options and verify that Sanskrit verse lines do not overlap or wrap destructively.",
+    "severity_if_unaddressed": "High"
+  },
+  {
+    "id": "Q9",
+    "domain_id": 2,
+    "domain_name": "Reading Canvas & Editorial Typography Engine (1.8x line-height ratio, clipping prevention)",
+    "title": "Reading Container Measure Constraint & Characters Per Line (CPL) Golden Ratio",
+    "question": "In ReadingCanvasScreen.kt line 273, the reader container specifies Modifier.widthIn(max = 640.dp). Given Sanskrit's extensive nominal compounding (Samāsa) and Devanagari glyph widths at 20sp, does a 640dp container width (with 20dp horizontal padding = 600dp net text width) strictly satisfy the typography golden ratio of 45–65 Characters Per Line (CPL), or does it exceed optimal reading comfort on tablets and wide screens?",
+    "technical_context": "ReadingCanvasScreen.kt lines 270-277; Editorial typography golden measure (Bringhurst's Elements of Typographic Style); Devanagari character density.",
+    "verification_methodology": "Compute average character count per line across all 701 Sanskrit shlokas rendered at 20sp within a 600dp net reading container; confirm that line character counts fall within the acceptable 45–65 CPL range.",
+    "severity_if_unaddressed": "Medium"
+  },
+  {
+    "id": "Q10",
+    "domain_id": 2,
+    "domain_name": "Reading Canvas & Editorial Typography Engine (1.8x line-height ratio, clipping prevention)",
+    "title": "Serif vs. Sans-Serif Multilingual Hierarchy & Visual Cognitive Disambiguation",
+    "question": "Type.kt pairs FontFamily.Serif for Sanskrit Devanagari (20sp/36sp), Roman IAST (15sp/25sp, Italic), and English (16sp/26sp) with FontFamily.SansSerif for Hindi (16sp/28sp). How does this intentional serif-sans typographic pairing establish a clear cognitive distinction between sacred canonical scripture (timeless serif) and contemporary vernacular exposition (accessible sans-serif) on the same continuous editorial canvas?",
+    "technical_context": "Type.kt lines 27-86 (ScriptureSanskritStyle, ScriptureIASTStyle, ScriptureHindiStyle, ScriptureEnglishStyle); Material 3 typography contrast.",
+    "verification_methodology": "Visually inspect a fully expanded shloka card displaying all four layers; verify that the transition between Sanskrit Serif, IAST Serif Italic, Hindi SansSerif, and English Serif creates an effortless visual scan path without glyph ambiguity.",
+    "severity_if_unaddressed": "Low"
+  },
+  {
+    "id": "Q11",
+    "domain_id": 3,
+    "domain_name": "Material 3 Expressive Design Compliance (Shapes, Badges, Buttons, Clutter-Free Guidelines)",
+    "title": "Clutter-Free Continuous Reading Canvas vs. Outdated Card Enclosures",
+    "question": "How does ShlokaCard.kt satisfy Google Material 3 Expressive's 'container reduction' and clutter-free reading principles by abandoning heavy bordered card boxes, harsh surface elevations, and opaque bounding rectangles in favor of an uninterrupted vertical rhythm structured by whitespace and subtle 0.5dp dividers with AccentGold pill dots?",
+    "technical_context": "ShlokaCard.kt lines 77-87, 245-269; Material 3 Expressive Container Reduction Design Guidelines; Compose elevation management.",
+    "verification_methodology": "Audit ShlokaCard composable hierarchy; verify that no Card, Surface, or heavy border modifier encapsulates the outer shloka container; check that visual separation relies on spacing and subtle divider lines.",
+    "severity_if_unaddressed": "Medium"
+  },
+  {
+    "id": "Q12",
+    "domain_id": 3,
+    "domain_name": "Material 3 Expressive Design Compliance (Shapes, Badges, Buttons, Clutter-Free Guidelines)",
+    "title": "Vivid Asymmetrical Geometry & Expressive Shape Token Utilization",
+    "question": "In Shape.kt, ExpressiveAsymmetricBadge is constructed with asymmetric corner radii (topStart = 22.dp, bottomEnd = 22.dp, topEnd = 6.dp, bottomStart = 6.dp) and ExpressiveAsymmetricCard with (topStart = 28.dp, bottomEnd = 28.dp, topEnd = 12.dp, bottomStart = 12.dp). Across which UI components are these expressive tokens deployed, and how do they avoid repetitive symmetric monotony while complying with the Material 3 Expressive shape palette?",
+    "technical_context": "Shape.kt lines 15-20; ParvaExplorerScreen.kt lines 198, 297, 317; ShlokaCard.kt line 145; ChapterSelectorSheet.kt line 150.",
+    "verification_methodology": "Trace all usages of ExpressiveAsymmetricBadge and ExpressiveAsymmetricCard across the codebase; verify that corner radii match specification and render smoothly on hardware-accelerated Compose canvases.",
+    "severity_if_unaddressed": "Medium"
+  },
+  {
+    "id": "Q13",
+    "domain_id": 3,
+    "domain_name": "Material 3 Expressive Design Compliance (Shapes, Badges, Buttons, Clutter-Free Guidelines)",
+    "title": "Semantic Chromatic Speaker Attribution (Krishna Saffron vs. Mortal Peacock)",
+    "question": "In ShlokaCard.kt lines 142-158, speaker attribution dynamically applies distinct color containers: if shloka.speaker contains 'भगवान' or 'श्रीभगवान', it renders AccentSaffron (16% alpha container, bold saffron text); otherwise (Arjuna, Sanjaya, Dhritarashtra), it renders AccentPeacock (14% alpha container, deep peacock text). How does this chromatic hierarchy enhance spiritual immersion and immediate speaker recognition during fast vertical scrolling?",
+    "technical_context": "ShlokaCard.kt lines 140-159; Color.kt lines 54-57 (AccentSaffron, AccentPeacock); Material 3 tonal container semantics.",
+    "verification_methodology": "Scroll through Bhagavad Gita Chapter 1 (Dhritarashtra, Sanjaya, Arjuna) into Chapter 2 (Shri Bhagavan); verify that speaker badge backgrounds and text colors switch precisely according to speaker identity without recomposition flicker.",
+    "severity_if_unaddressed": "Low"
+  },
+  {
+    "id": "Q14",
+    "domain_id": 3,
+    "domain_name": "Material 3 Expressive Design Compliance (Shapes, Badges, Buttons, Clutter-Free Guidelines)",
+    "title": "Ergonomics of Inline Action Touch Targets vs. 48dp Accessibility Standards",
+    "question": "In ShlokaCard.kt lines 111-136, the inline Bookmark and Share IconButtons are configured with Modifier.size(38.dp). Does this explicit 38dp container constrain the interactive touch target below the mandatory 48×48dp minimum required by Android Accessibility and WCAG 2.5.5, and how does Compose's default minimumInteractiveComponentSize mitigate or conflict with this constraint?",
+    "technical_context": "ShlokaCard.kt lines 113, 127; Android Accessibility Guideline 48dp minimum touch target; WCAG 2.5.5 Target Size (Enhanced).",
+    "verification_methodology": "Run Android Accessibility Scanner or Compose UI Test on ShlokaCard; inspect interactive touch bounding box; verify whether touch target extends to 48dp or triggers accessibility warning flags.",
+    "severity_if_unaddressed": "High"
+  },
+  {
+    "id": "Q15",
+    "domain_id": 3,
+    "domain_name": "Material 3 Expressive Design Compliance (Shapes, Badges, Buttons, Clutter-Free Guidelines)",
+    "title": "Dual Theme Contrast Invariants & Dynamic System Color Suppression",
+    "question": "Color.kt and Theme.kt implement Sacred Warm Papyrus (#FBF8F2 / #252528) and Dark Monastic Espresso (#1B1917 / #EAE4DC). Do both color schemes achieve WCAG 2.1 Level AAA contrast ratios (> 7.0:1) across body and display text, and why is dynamicColor hardcoded to false (defaulting to the curated palettes) to safeguard the sacred scriptural ambiance against erratic Android 12+ Monet wallpaper bleeding?",
+    "technical_context": "Color.kt lines 9-52; Theme.kt lines 20-82; WCAG 2.1 Contrast Invariant calculations (luminance formulas).",
+    "verification_methodology": "Calculate relative luminance and contrast ratios between background (#FBF8F2) and onSurface (#252528 / #1E1A17), and between dark background (#1B1917 / #181512) and dark onSurface (#EAE4DC / #EDE5DC); assert contrast >= 14:1 (exceeding 7:1 AAA).",
+    "severity_if_unaddressed": "Medium"
+  },
+  {
+    "id": "Q16",
+    "domain_id": 4,
+    "domain_name": "Collapsible Wisdom Accordion & Chapter Overview Context",
+    "title": "Nested Animation Measurement Conflicts in ChapterWisdomAccordion",
+    "question": "In ReadingCanvasScreen.kt lines 439-502, ChapterWisdomAccordion applies Modifier.animateContentSize(animationSpec = spring(dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessMediumLow)) on the outer Card, and simultaneously wraps the inner content in AnimatedVisibility(enter = fadeIn() + expandVertically(), exit = fadeOut() + shrinkVertically()). Does this nested double-animation trigger redundant layout measurement passes, height overshoot jitter, or frame drops during expand/collapse on mid-range devices?",
+    "technical_context": "ReadingCanvasScreen.kt lines 428-529; Compose layout pass mechanics for animateContentSize vs. AnimatedVisibility.",
+    "verification_methodology": "Profile UI rendering using Android Studio Layout Inspector and Systrace while repeatedly expanding and collapsing ChapterWisdomAccordion; measure frame render times and check for double layout passes or janky spring bounces.",
+    "severity_if_unaddressed": "Medium"
+  },
+  {
+    "id": "Q17",
+    "domain_id": 4,
+    "domain_name": "Collapsible Wisdom Accordion & Chapter Overview Context",
+    "title": "Bilingual Summary Completeness & Asymmetric Null-Handling Across 18 Chapters",
+    "question": "In ChapterWisdomAccordion line 424, the composable returns early if summaryHindi.isNullOrBlank() && summaryEnglish.isNullOrBlank(). In the bundled assets/mahabharata.db database, are both Hindi and English summaries populated for all 18 chapters, and how does the layout behave if a chapter has a summary in Hindi but not English, or vice versa?",
+    "technical_context": "ReadingCanvasScreen.kt lines 420-425, 511-526; SQLite parvas table schema (summary_hindi, summary_english).",
+    "verification_methodology": "Query assets/mahabharata.db for SELECT number, length(summary_hindi), length(summary_english) FROM parvas; verify whether all 18 chapters have non-zero lengths; verify that missing English does not leave awkward spacer gaps.",
+    "severity_if_unaddressed": "Medium"
+  },
+  {
+    "id": "Q18",
+    "domain_id": 4,
+    "domain_name": "Collapsible Wisdom Accordion & Chapter Overview Context",
+    "title": "Accordion Height Expansion Impact on LazyColumn Reading Scroll Offsets",
+    "question": "When a user has scrolled down into a chapter (e.g., reading verse 15) and scrolls back up to expand the ChapterWisdomAccordion, how does the resulting height expansion (~200dp–400dp) alter the listState.firstVisibleItemIndex and firstVisibleItemScrollOffset, and could expanding the accordion cause an unexpected visual viewport jump when scrolling downward?",
+    "technical_context": "ReadingCanvasScreen.kt lines 289-295, 420-530; LazyColumn scroll physics and item index offsetting.",
+    "verification_methodology": "Position reader at verse 5; record pixel scroll offset; scroll up to expand accordion; scroll back down to verse 5 and verify whether item index and relative verse scroll position remain stable and intuitive.",
+    "severity_if_unaddressed": "Low"
+  },
+  {
+    "id": "Q19",
+    "domain_id": 4,
+    "domain_name": "Collapsible Wisdom Accordion & Chapter Overview Context",
+    "title": "Sacred Emblem Typography Anchor & Contextual Framing Layout",
+    "question": "The header of ChapterWisdomAccordion embeds a 34dp circular saffron container displaying the sacred syllable 'ॐ' (AccentSaffron) alongside the title 'अध्याय परिचय • Overview'. How does this prominent spiritual anchor establish contextual thematic framing for the chapter, and does TalkBack announce this graphic appropriately without redundant glyph noise?",
+    "technical_context": "ReadingCanvasScreen.kt lines 456-490; Typography titleMedium; Semantics and accessibility contentDescription.",
+    "verification_methodology": "Enable TalkBack screen reader; navigate focus to the ChapterWisdomAccordion header; verify that the announcement reads 'अध्याय परिचय • Overview' without attempting to speak unpronounced punctuation or untranslated characters.",
+    "severity_if_unaddressed": "Low"
+  },
+  {
+    "id": "Q20",
+    "domain_id": 4,
+    "domain_name": "Collapsible Wisdom Accordion & Chapter Overview Context",
+    "title": "Accordion Expansion State Retention across Activity Recreation",
+    "question": "In ChapterWisdomAccordion line 426, the expansion state is initialized via remember { mutableStateOf(false) }. If the user expands the accordion and rotates their phone from portrait to landscape (or triggers system Dark Mode toggle), does remember lose its state and collapse the summary, and should rememberSaveable be employed to persist user reading preferences across configuration changes?",
+    "technical_context": "ReadingCanvasScreen.kt line 426; remember vs. rememberSaveable; Android configuration changes.",
+    "verification_methodology": "Expand ChapterWisdomAccordion; trigger device orientation change (portrait -> landscape); verify whether accordion remains expanded or resets to collapsed state.",
+    "severity_if_unaddressed": "Medium"
+  },
+  {
+    "id": "Q21",
+    "domain_id": 5,
+    "domain_name": "Tactile Floating Reader Toolbar & Scroll Physics",
+    "title": "Dynamic Directional Scroll Velocity & 12px Deadzone Hysteresis Auto-Hide",
+    "question": "In ReadingCanvasScreen.kt lines 183-203, toolbar visibility uses a snapshotFlow that tracks firstVisibleItemIndex and firstVisibleItemScrollOffset with a 12px deadzone (currentOffset > previousScrollOffset + 12). Why is this 12px hysteresis critical for distinguishing intentional reading flings from resting thumb jitters, and how does it prevent rapid flickering ('chatter') of the bottom toolbar during slow line-by-line reading?",
+    "technical_context": "ReadingCanvasScreen.kt lines 183-203; snapshotFlow distinctUntilChanged; directional hysteresis thresholds.",
+    "verification_methodology": "Perform micro-scrolls of 3px to 8px in alternating directions; verify that isFloatingBarVisible remains steady and does not toggle; perform a continuous downward scroll > 20px and verify toolbar smoothly retreats.",
+    "severity_if_unaddressed": "Medium"
+  },
+  {
+    "id": "Q22",
+    "domain_id": 5,
+    "domain_name": "Tactile Floating Reader Toolbar & Scroll Physics",
+    "title": "Spring Physics Ejection Coordinates & System Navigation Bar Inset Clearance",
+    "question": "In ReadingCanvasScreen.kt lines 332-342, FloatingReaderBar animates via slideInVertically(initialOffsetY = { it * 2 }) and slideOutVertically(targetOffsetY = { it * 2 }) with spring(stiffness = Spring.StiffnessMediumLow). Does { it * 2 } translate the toolbar far enough to guarantee complete clearance beyond the 3-button navigation bar or gesture pill chin on edge-to-edge Android 15 devices without clipping visual drop shadows?",
+    "technical_context": "ReadingCanvasScreen.kt lines 332-345; Modifier.shadow(10.dp, ExpressivePillShape); WindowInsets.navigationBars.",
+    "verification_methodology": "Test on an Android device configured with 3-button navigation; trigger toolbar hide; verify via Layout Inspector that the pill container and its 10dp shadow elevation are 100% off-screen and do not bleed into the navigation bar area.",
+    "severity_if_unaddressed": "Low"
+  },
+  {
+    "id": "Q23",
+    "domain_id": 5,
+    "domain_name": "Tactile Floating Reader Toolbar & Scroll Physics",
+    "title": "M3 Expressive HorizontalFloatingToolbar Specification Compliance",
+    "question": "Requirement R2 of ORIGINAL_REQUEST.md calls for an auto-hiding HorizontalFloatingToolbar housing a morphing ButtonGroup with toggleable items for instant language filtering ([संस्कृत], [IAST], [हिन्दी], [English]). Why does the current implementation use a custom Surface pill bar with chapter-stepping buttons opening a ReaderSettingsDialog modal instead, and how can the official Material 3 Expressive HorizontalFloatingToolbar component be integrated directly onto the canvas?",
+    "technical_context": "ORIGINAL_REQUEST.md lines 18, 67; ReadingCanvasScreen.kt lines 346-362, 537-625; androidx.compose.material3.HorizontalFloatingToolbar; ButtonGroup toggleableItem.",
+    "verification_methodology": "Compare current FloatingReaderBar UI against the M3 Expressive specification in ORIGINAL_REQUEST.md; verify whether language toggles can be enacted with single-tap inline chips without opening a full modal dialog.",
+    "severity_if_unaddressed": "High"
+  },
+  {
+    "id": "Q24",
+    "domain_id": 5,
+    "domain_name": "Tactile Floating Reader Toolbar & Scroll Physics",
+    "title": "Virtualization Performance & 120Hz Silkiness on 78-Verse Chapter Scroll",
+    "question": "Bhagavad Gita Chapter 18 contains 78 shlokas, rendering up to ~400 multilingual text composables simultaneously if all 4 language layers are enabled. How do LazyColumn item keys (key = { it.id }), stateless ShlokaCard architecture, and Kotlin Immutable data models guarantee steady 120Hz frame rates without Garbage Collection jank or recomposition churn during high-velocity fling gestures?",
+    "technical_context": "ReadingCanvasScreen.kt lines 298-317; ShlokaCard.kt lines 58-86; Compose compiler stability and skipping optimization.",
+    "verification_methodology": "Run a 120Hz fling performance test across Chapter 18 using Android Studio Profiler (Systrace / Perfetto); verify that 0 frames drop below 8.3ms (120fps) and that memory consumption remains under 130MB active heap.",
+    "severity_if_unaddressed": "High"
+  },
+  {
+    "id": "Q25",
+    "domain_id": 5,
+    "domain_name": "Tactile Floating Reader Toolbar & Scroll Physics",
+    "title": "Quick-Step Chapter Navigation Boundaries & Disabled Semantics State",
+    "question": "In FloatingReaderBar lines 560-623, the Previous Chapter button is disabled when chapterNumber <= 1, and the Next Chapter button is disabled when chapterNumber >= 18. Does IconButton visually dim to 30% alpha, does it cleanly drop click gestures, and does TalkBack announce 'disabled' state to vision-impaired users to prevent confusion at the scriptural boundaries?",
+    "technical_context": "ReadingCanvasScreen.kt lines 560-571, 611-622; Compose semantics enabled property; TalkBack accessibility state.",
+    "verification_methodology": "Navigate to Chapter 1; verify previous button has disabled tint and TalkBack announces disabled; navigate to Chapter 18; verify next button has disabled tint and does not emit navigation events on tap.",
+    "severity_if_unaddressed": "Low"
+  },
+  {
+    "id": "Q26",
+    "domain_id": 6,
+    "domain_name": "Multilingual Layer & Script Switching (Devanagari, Roman IAST, Hindi, English)",
+    "title": "Minimum-1 Active Language Invariant & Blank Card Prevention",
+    "question": "If a user attempts to toggle off all language layers in ReaderSettingsDialog, how do the toggle guard (active >= 1) and ShlokaCard's defensive fallback (effectiveShowSanskrit = showSanskrit || (!showIAST && !showHindi && !showEnglish)) prevent the verse card from collapsing into a zero-height blank item or presenting an empty screen?",
+    "technical_context": "ReadingCanvasScreen.kt lines 373-388; ShlokaCard.kt lines 69-70; Invariant logic testing.",
+    "verification_methodology": "Open ReaderSettingsDialog; attempt to uncheck all four checkboxes; verify that unchecking the fourth box is rejected, or if forced programmatically, verify ShlokaCard continues rendering Sanskrit as fallback.",
+    "severity_if_unaddressed": "Critical"
+  },
+  {
+    "id": "Q27",
+    "domain_id": 6,
+    "domain_name": "Multilingual Layer & Script Switching (Devanagari, Roman IAST, Hindi, English)",
+    "title": "Fluid Height Morphing & Cumulative Layout Shift (CLS) Prevention",
+    "question": "In ShlokaCard.kt line 81, Column applies Modifier.animateContentSize(animationSpec = spring(dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessMediumLow)). When switching languages, does this spring animation smoothly glide card heights without abrupt screen snapping, and how does LazyColumn handle item height changes without throwing off the visible scroll position?",
+    "technical_context": "ShlokaCard.kt lines 81-86; animateContentSize spring damping; LazyColumn scroll offset preservation.",
+    "verification_methodology": "Toggle Hindi translation while viewing verse 10; record screen recording at 60fps; verify that surrounding cards gently expand/contract without sudden instantaneous coordinate teleportation or screen jumping.",
+    "severity_if_unaddressed": "Medium"
+  },
+  {
+    "id": "Q28",
+    "domain_id": 6,
+    "domain_name": "Multilingual Layer & Script Switching (Devanagari, Roman IAST, Hindi, English)",
+    "title": "Seamless Horizontal Divider State Transition on Language Toggle",
+    "question": "In ShlokaCard.kt lines 197-209, the subtle horizontal divider between original Sanskrit/IAST and modern vernacular translations is wrapped inside AnimatedVisibility(visible = (effectiveShowSanskrit || showIAST) && (showHindi || showEnglish)). Why was wrapping this divider in AnimatedVisibility necessary to eliminate visual 'snapping' or orphaned divider lines when translations are toggled off?",
+    "technical_context": "ShlokaCard.kt lines 197-209; AnimatedVisibility fadeIn + expandVertically; Reviewer Round 3 test_04 verification.",
+    "verification_methodology": "Toggle translations off leaving only Sanskrit; observe whether the divider smoothly fades and collapses or leaves an unsightly hanging divider border below the Sanskrit verse.",
+    "severity_if_unaddressed": "Medium"
+  },
+  {
+    "id": "Q29",
+    "domain_id": 6,
+    "domain_name": "Multilingual Layer & Script Switching (Devanagari, Roman IAST, Hindi, English)",
+    "title": "Phonetic Fidelity & Diacritic Precision of Roman IAST Transliteration",
+    "question": "How does tools/data_pipeline/transliterate.py generate Roman IAST transliterations from Sanskrit Devanagari, and does it strictly adhere to the International Alphabet of Sanskrit Transliteration (IAST) standard—specifically differentiating anusvara (ṃ) from class nasals (ṅ, ñ, ṇ, n, m), representing vocalic ṛ and ṝ, preserving visarga (ḥ), and accurately rendering complex conjuncts like ज्ञ (jña) and क्ष (kṣa)?",
+    "technical_context": "tools/data_pipeline/transliterate.py; IAST Unicode standards (U+1E00-U+1EFF); Sanskrit phonology rules.",
+    "verification_methodology": "Extract 50 random IAST shlokas from assets/mahabharata.db; validate character inventory against official IAST Unicode tables; verify that no raw ASCII approximations (like 'sh' for 'ś' or 'ri' for 'ṛ') contaminate the canonical dataset.",
+    "severity_if_unaddressed": "High"
+  },
+  {
+    "id": "Q30",
+    "domain_id": 6,
+    "domain_name": "Multilingual Layer & Script Switching (Devanagari, Roman IAST, Hindi, English)",
+    "title": "Bidirectional Layout Isolation & RTL Locale Flipping Immunity",
+    "question": "AndroidManifest.xml specifies android:supportsRtl='true'. In ShlokaCard.kt line 173, Text uses textAlign = TextAlign.Start. When an Android device is set to an RTL system language (e.g., Arabic, Hebrew, Urdu), does TextAlign.Start resolve to right alignment, causing Devanagari and English verses to right-align with ragged left margins, and should CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) wrap scripture cards to enforce strict Left-to-Right orientation?",
+    "technical_context": "AndroidManifest.xml line 9; ShlokaCard.kt line 173; Compose LocalLayoutDirection; Bidirectional text rendering in Indic scripts.",
+    "verification_methodology": "Change device system locale to Arabic (ar-EG); open ReadingCanvasScreen; observe alignment of Devanagari Sanskrit verses; verify whether verses stay left-aligned (proper for Sanskrit) or erroneously flip to right alignment.",
+    "severity_if_unaddressed": "High"
+  },
+  {
+    "id": "Q31",
+    "domain_id": 7,
+    "domain_name": "Scripture Scope, Canonical Accuracy & Speaker Attribution (701 Verses, 18 Chapters)",
+    "title": "Canonical Verse Count Reconciliation (701 vs. 700 Verses Tradition)",
+    "question": "While popular tradition counts 700 verses in the Bhagavad Gita, assets/mahabharata.db contains exactly 701 verses across 18 chapters. Specifically, why does Chapter 13 contain 35 verses (incorporating Arjuna's opening inquiry 'प्रकृतिं पुरुषं चैव क्षेत्रं क्षेत्रज्ञमेव च...' as verse 13.1) in accordance with the authoritative Gita Press Gorakhpur vulgate, and how does the application handle citations across both 700-verse academic and 701-verse traditional numbering?",
+    "technical_context": "SQLite shlokas table count (701 rows); Chapter 13 verse count (35 rows); Gita Press Gorakhpur recension vs. Shankaracharya commentary recension.",
+    "verification_methodology": "Execute SQL: SELECT chapter_number, count(*) FROM shlokas GROUP BY chapter_number ORDER BY chapter_number; assert chapter counts match [47, 72, 43, 42, 29, 47, 30, 28, 34, 42, 55, 20, 35, 27, 20, 24, 28, 78] summing to 701.",
+    "severity_if_unaddressed": "Medium"
+  },
+  {
+    "id": "Q32",
+    "domain_id": 7,
+    "domain_name": "Scripture Scope, Canonical Accuracy & Speaker Attribution (701 Verses, 18 Chapters)",
+    "title": "Speaker Attribution Distribution & Sparse NULL Record Modeling",
+    "question": "In the SQLite shlokas table, distinct speakers comprise only 'धृतराष्ट्र उवाच', 'सञ्जय उवाच', 'अर्जुन उवाच', 'श्रीभगवानुवाच', and NULL. Why is speaker recorded as NULL on verses where the speech continues uninterrupted, and how does ShlokaCard's conditional rendering (!shloka.speaker.isNullOrBlank()) preserve classical scripture presentation by displaying speaker headers only at conversational dialogue handoffs?",
+    "technical_context": "SQLite shlokas schema column speaker; ShlokaCard.kt lines 140-159; Classical Sanskrit Uvāca dialogue conventions.",
+    "verification_methodology": "Query SELECT id, verse_tag, speaker FROM shlokas WHERE chapter_number = 1 ORDER BY verse_number LIMIT 10; verify verse 1.1 has 'धृतराष्ट्र उवाच', verse 1.2 has 'सञ्जय उवाच', and verses 1.3-1.19 have NULL speaker; verify UI renders speaker heading only on 1.1 and 1.2.",
+    "severity_if_unaddressed": "Low"
+  },
+  {
+    "id": "Q33",
+    "domain_id": 7,
+    "domain_name": "Scripture Scope, Canonical Accuracy & Speaker Attribution (701 Verses, 18 Chapters)",
+    "title": "Verse Tag Contiguity & Parva-Chapter Normalization Integrity",
+    "question": "Across all 701 shlokas, verse_tag follows the normalized tripartite pattern '{parva}.{chapter}.{verse}' (e.g., '1.1.1' to '18.18.78'). Are there any duplicate tags, broken numerical sequences, or discrepancies between parva_number, chapter_number, and verse_number columns, and how does ShlokaEntity enforce uniqueness across these composite coordinates?",
+    "technical_context": "ShlokaEntity.kt indices; SQLite PRAGMA integrity_check; verse_tag formatting invariants.",
+    "verification_methodology": "Run Python script verifying: (1) verse_number is strictly contiguous from 1 to chapter_count for every chapter; (2) verse_tag exactly equals f'{parva_number}.{chapter_number}.{verse_number}'; (3) count(distinct verse_tag) == 701.",
+    "severity_if_unaddressed": "Critical"
+  },
+  {
+    "id": "Q34",
+    "domain_id": 7,
+    "domain_name": "Scripture Scope, Canonical Accuracy & Speaker Attribution (701 Verses, 18 Chapters)",
+    "title": "Dual Mangalācharaṇa Invocation & Canonical Epistemology",
+    "question": "WelcomeScreen.kt features the universal Mahabharata invocation ('नारायणं नमस्कृत्य नरं चैव नरोत्तमम्...'), whereas ReadingCanvasScreen.kt opens with the Vaishnava devotion banner ('॥ श्रीपरमात्मने नमः ॥'). How does this dual invocation architecture honor both the broader Vyasa Itihasa context (as the crest jewel of the Bhishma Parva) and the distinct ontological status of the Gita as an independent Upanishad of Krishna-Arjuna Samvada?",
+    "technical_context": "WelcomeScreen.kt lines 51-53; ReadingCanvasScreen.kt line 644; Sanskrit textual tradition (Gita Dhyanam / Mahabharata Mangalācharaṇa).",
+    "verification_methodology": "Audit text strings in WelcomeScreen and ChapterHeaderBanner; cross-reference with Gita Press vulgate preface to verify textual accuracy of invocation shlokas.",
+    "severity_if_unaddressed": "Low"
+  },
+  {
+    "id": "Q35",
+    "domain_id": 7,
+    "domain_name": "Scripture Scope, Canonical Accuracy & Speaker Attribution (701 Verses, 18 Chapters)",
+    "title": "Quadrilingual Alignment Verification of Foundational Gītā Shlokas",
+    "question": "Are the cardinal philosophical verses of the Bhagavad Gita—including Ch. 2.47 (Karmanye Vadhikaraste), Ch. 4.7-8 (Yada Yada Hi Dharmasya), Ch. 9.22 (Ananyas Chintayanto Mam), Ch. 11.32 (Kalo'smi Loka Kshaya Krita), and Ch. 18.66 (Sarva Dharman Parityajya)—quadrilingually aligned with 100% character-level precision across Sanskrit Devanagari, Roman IAST, Hindi (Gita Press), and English (KMG / Sivananda)?",
+    "technical_context": "SQLite shlokas table rows for 2.2.47, 4.4.7, 4.4.8, 9.9.22, 11.11.32, 18.18.66; Sanskrit orthography.",
+    "verification_methodology": "Execute Python verification comparing database text of the 5 canonical anchor verses against verified digital corpora (Gita Press vulgate and Bhandarkar Oriental Research Institute); assert exact match on all four linguistic fields.",
+    "severity_if_unaddressed": "High"
+  },
+  {
+    "id": "Q36",
+    "domain_id": 8,
+    "domain_name": "FTS5 Full-Text Search Engine & Multilingual Query Matching",
+    "title": "DAO Query Discrepancy: LIKE vs. SQLite FTS5 MATCH Execution",
+    "question": "In ShlokaDao.kt lines 24-33, searchShlokas() performs a standard WHERE sanskrit_devanagari LIKE '%' || :query || '%' OR ... scan on the core shlokas table instead of issuing an FTS5 MATCH query against shlokas_fts. Why is the pre-bundled shlokas_fts virtual table bypassed in production, and how does this affect query execution latency, token stemming, and BM25 relevance ranking as the database grows?",
+    "technical_context": "ShlokaDao.kt lines 24-33; MahabharataRepositoryImpl.kt line 88; assets/mahabharata.db table shlokas_fts; SQLite FTS5 MATCH vs LIKE %.",
+    "verification_methodology": "Benchmark execution time of ShlokaDao.searchShlokas() vs. SELECT * FROM shlokas_fts WHERE shlokas_fts MATCH :query across 1,000 queries; inspect SQLite query execution plan using EXPLAIN QUERY PLAN.",
+    "severity_if_unaddressed": "Critical"
+  },
+  {
+    "id": "Q37",
+    "domain_id": 8,
+    "domain_name": "FTS5 Full-Text Search Engine & Multilingual Query Matching",
+    "title": "Devanagari Combining Mark Retention (\\p{M}) in Query Sanitizer",
+    "question": "In MahabharataRepositoryImpl.kt line 171, sanitizeFts5Query cleans input using Regex('[^\\\\p{L}\\\\p{M}\\\\p{N}\\\\s]'). Why is preserving Unicode Mark category \\p{M} strictly mandatory for Indic scripts, and what critical bug occurs if \\p{M} is omitted (i.e. stripping all Devanagari vowel matras, viramas, and anusvaras, reducing 'कुरुक्षेत्रे' to naked consonants 'करकषतर')?",
+    "technical_context": "MahabharataRepositoryImpl.kt lines 169-202; Unicode Character Database General Category M (Mark, combining); tests/adversarial_m1_stress.py Suite 6.",
+    "verification_methodology": "Pass string 'धर्मक्षेत्रे कुरुक्षेत्रे' through query sanitizer with and without \\p{M}; assert that with \\p{M}, combining characters (े, ृ) remain intact; execute FTS5 search and assert matching hit count.",
+    "severity_if_unaddressed": "Critical"
+  },
+  {
+    "id": "Q38",
+    "domain_id": 8,
+    "domain_name": "FTS5 Full-Text Search Engine & Multilingual Query Matching",
+    "title": "Diacritic Folding & Unicode Normalization in Roman IAST Matching",
+    "question": "If an English or Hindi user searches for 'Krishna' or 'dharma' on a standard QWERTY keyboard without diacritics, how can the search engine match 'Kṛṣṇa' (U+1E37, U+1E63) or 'dharmakṣetre' in Roman IAST? Does standard SQLite FTS5 unicode61 tokenizer fold Latin diacritics automatically, or is a normalized shadow column required to bridge the gap between ASCII input and scholarly IAST?",
+    "technical_context": "SQLite FTS5 unicode61 tokenizer 'remove_diacritics 1'; Roman IAST Unicode character mappings; ShlokaSearchResult matching.",
+    "verification_methodology": "Execute search query 'Krsna' against shlokas_fts with default tokenizer; verify whether verses containing 'Kṛṣṇa' are returned; test with unicode61 remove_diacritics parameter to assess hit recall.",
+    "severity_if_unaddressed": "High"
+  },
+  {
+    "id": "Q39",
+    "domain_id": 8,
+    "domain_name": "FTS5 Full-Text Search Engine & Multilingual Query Matching",
+    "title": "Real-Time Sub-15ms Latency SLA & Asynchronous Flow Debouncing",
+    "question": "In SearchScreen.kt, search query changes immediately trigger repository.searchShlokas(searchQuery). Under high-speed character typing, does the lack of a debounce(300ms) operator overwhelm the Room SQLite thread pool with superseded query tasks, and does query execution consistently satisfy the < 15ms latency SLA on low-tier mobile hardware?",
+    "technical_context": "SearchScreen.kt lines 69-79; MahabharataRepositoryImpl.kt lines 81-98; Kotlin Coroutines Flow.debounce; SQLite query benchmarking.",
+    "verification_methodology": "Simulate rapid typing of 20 characters in 1 second; profile active Room database threads and CPU utilization; measure latency from last character keystroke to results emission in UI.",
+    "severity_if_unaddressed": "Medium"
+  },
+  {
+    "id": "Q40",
+    "domain_id": 8,
+    "domain_name": "FTS5 Full-Text Search Engine & Multilingual Query Matching",
+    "title": "FTS5 Synchronization Trigger Coverage & External Content CRUD Integrity",
+    "question": "In assets/mahabharata.db, only an AFTER INSERT trigger (shlokas_ai) is attached to shlokas. Why are AFTER UPDATE (shlokas_au) and AFTER DELETE (shlokas_ad) triggers missing, and if a future app migration or dynamic commentary update edits or deletes a row in shlokas, how does the absence of these triggers corrupt the FTS5 external content table and produce phantom search hits?",
+    "technical_context": "assets/mahabharata.db triggers; SQLite FTS5 External Content Tables documentation; SQLITE_CORRUPT_VTAB error handling.",
+    "verification_methodology": "In a temporary test database, update the translation of verse 1; query shlokas_fts MATCH for the old word and new word; assert that without shlokas_au, FTS5 returns stale/phantom results; create missing triggers and re-verify sync.",
+    "severity_if_unaddressed": "High"
+  },
+  {
+    "id": "Q41",
+    "domain_id": 9,
+    "domain_name": "Bookmarks, Collections & Reading State Persistence",
+    "title": "Un-debounced Scroll Position Persistence under High-Velocity Fling Inertia",
+    "question": "In ReadingCanvasScreen.kt lines 165-181, snapshotFlow collects firstVisibleItemScrollOffset and immediately invokes repository.saveReadingPosition(...) on Dispatchers.IO. During high-velocity fling scrolls down a 78-verse chapter, does this fire dozens of un-debounced SQLite INSERT OR REPLACE write transactions per second, causing database write contention, thread pool starvation, and flash memory wear?",
+    "technical_context": "ReadingCanvasScreen.kt lines 165-181; ReadingHistoryDao.kt saveProgress; SQLite WAL mode transaction throughput under burst writes.",
+    "verification_methodology": "Attach Android Studio Profiler (Database Inspector / CPU Trace); perform rapid fling gesture in ReadingCanvasScreen; measure the number of SQLite write transactions dispatched within a 2-second window; verify whether debouncing stabilizes write frequency.",
+    "severity_if_unaddressed": "High"
+  },
+  {
+    "id": "Q42",
+    "domain_id": 9,
+    "domain_name": "Bookmarks, Collections & Reading State Persistence",
+    "title": "Scroll Offset Invalidation across Dynamic Multilingual Visibility Changes",
+    "question": "When reading position is restored via listState.scrollToItem(targetItem, history.scrollOffset), what happens if the user saved their position with all 4 multilingual layers visible (tall card heights ~400dp) but restarts the app with only Sanskrit visible (short card heights ~100dp)? Does the stored pixel scrollOffset overshoot the target verse, and should scroll restoration clamp offset to the actual target item height?",
+    "technical_context": "ReadingCanvasScreen.kt lines 142-162; LazyListState scrollToItem item-index vs pixel-offset semantics; Card height variance across language modes.",
+    "verification_methodology": "Read to verse 20 with all 4 languages enabled; record scroll offset; toggle off IAST, Hindi, and English; close and restart app; observe restored verse visibility; verify whether verse 20 is on-screen or scrolled out of view.",
+    "severity_if_unaddressed": "Medium"
+  },
+  {
+    "id": "Q43",
+    "domain_id": 9,
+    "domain_name": "Bookmarks, Collections & Reading State Persistence",
+    "title": "Room Foreign Key Schema Verification & Named Index Alignment",
+    "question": "BookmarkEntity declares foreignKeys = [ForeignKey(entity = ShlokaEntity::class, parentColumns = ['id'], childColumns = ['shloka_id'], onDelete = ForeignKey.CASCADE)]. Does the pre-packaged SQLite database in assets/mahabharata.db declare ON DELETE CASCADE in its DDL, and does it define the named index index_bookmarks_shloka_id to satisfy Room's strict startup schema validation without throwing IllegalStateException?",
+    "technical_context": "BookmarkEntity.kt lines 12-25; SQLite PRAGMA foreign_key_list(bookmarks); PRAGMA index_list(bookmarks); Room TableInfo verification.",
+    "verification_methodology": "Run Python script verifying PRAGMA foreign_key_list and index_list on bookmarks table; verify on_delete == 'CASCADE'; initialize Room database on fresh Android instance and confirm zero schema mismatch warnings.",
+    "severity_if_unaddressed": "Critical"
+  },
+  {
+    "id": "Q44",
+    "domain_id": 9,
+    "domain_name": "Bookmarks, Collections & Reading State Persistence",
+    "title": "Deep-Link Navigation from Bookmark Tags to Exact Target Shloka",
+    "question": "In BookmarksScreen.kt line 144, clicking a bookmark passes bookmark.shloka.verseTag (e.g., '2.2.47') to onNavigateToShlokaTag. In VyasNavigation.kt, how is this string tag deconstructed into (parvaNumber, chapterNumber, initialVerse), and how does the reader handle edge cases such as trailing whitespace, missing periods, or target verses located past the end of the chapter?",
+    "technical_context": "BookmarksScreen.kt lines 140-149; VyasNavigation.kt lines 150-170; Screen.Reader.createRoute(pNum, chNum, initialVerse).",
+    "verification_methodology": "Create bookmarks across Chapters 1, 9, and 18; navigate to BookmarksScreen; click each bookmark item; verify that ReadingCanvasScreen opens to the correct chapter and automatically scrolls to the exact bookmarked shloka.",
+    "severity_if_unaddressed": "Medium"
+  },
+  {
+    "id": "Q45",
+    "domain_id": 9,
+    "domain_name": "Bookmarks, Collections & Reading State Persistence",
+    "title": "Bookmark Collections & Reflective User Note Architecture Utilization",
+    "question": "The BookmarkEntity schema includes collectionName: String (defaulting to 'Favorites') and userNote: String?. Does the user interface in BookmarksScreen.kt or ShlokaCard.kt currently provide dialogs or action sheets allowing readers to create custom thematic collections (e.g., 'Karma Yoga', 'Dhyana', 'Crisis Solace') or annotate verses with personal study notes, or are these database capabilities awaiting UI exposure?",
+    "technical_context": "BookmarkEntity.kt lines 20-22; BookmarksScreen.kt lines 132-150; MahabharataRepository.kt toggleBookmark(shlokaId, collectionName, note).",
+    "verification_methodology": "Audit BookmarksScreen.kt and ShlokaCard.kt UI controls; check whether collection grouping or note editing text fields exist; verify if toggleBookmark is only called with default parameters.",
+    "severity_if_unaddressed": "Low"
+  },
+  {
+    "id": "Q46",
+    "domain_id": 10,
+    "domain_name": "Quote Card Exporter, Performance on 4GB Low-Memory Hardware & Edge Cases",
+    "title": "Bitmap Memory Footprint & OutOfMemory (OOM) Protection on Low-RAM Devices",
+    "question": "QuoteExportDialog.kt renders high-resolution quote cards at 1080×1350 pixels in ARGB_8888, allocating ~5.84MB of uncompressed bitmap memory per render. On low-memory Android hardware (e.g., 2GB–4GB RAM, Android Go with 192MB JVM heap limits), does repeated generation or orientation changes during quote card rendering risk OutOfMemoryError, and is bitmap memory recycled or executed on Dispatchers.Default with appropriate memory budgeting?",
+    "technical_context": "QuoteExportDialog.kt lines 76-78, 355-367; Bitmap.createBitmap(1080, 1350, Bitmap.Config.ARGB_8888); Android low-RAM device heap constraints.",
+    "verification_methodology": "Run a stress loop creating and exporting 20 consecutive quote cards on a low-memory emulator configured with 192MB heap; monitor heap growth via Android Studio Memory Profiler; verify that memory is reclaimed without OOM crashes.",
+    "severity_if_unaddressed": "High"
+  },
+  {
+    "id": "Q47",
+    "domain_id": 10,
+    "domain_name": "Quote Card Exporter, Performance on 4GB Low-Memory Hardware & Edge Cases",
+    "title": "Text Auto-Wrapping & Footer Boundary Clearance on Long Metrical Verses",
+    "question": "In renderQuoteCardBitmap (lines 484-524), long verses (such as Chapter 11 Visvarupa Darsana verses with lengthy Hindi/English commentaries) can exceed the card's vertical coordinate budget. How do the height boundary checks (currentY + 44f > height - 140f for Hindi and currentY + 40f > height - 120f for English) prevent text from colliding with or drawing over the sacred attribution footer at height - 80f?",
+    "technical_context": "QuoteExportDialog.kt lines 484-536; Android Canvas drawText and Paint.measureText text wrapping; Reviewer Round 3 test_06 boundary clearance.",
+    "verification_methodology": "Generate quote cards for the longest verse in the Gita (e.g., 11.19 or 18.78) with all 4 languages selected; inspect the generated 1080x1350 bitmap; assert that no translation text touches or overlaps the footer text 'Mahabharata — श्रीमद्भगवद्गीता (X.Y)'.",
+    "severity_if_unaddressed": "Medium"
+  },
+  {
+    "id": "Q48",
+    "domain_id": 10,
+    "domain_name": "Quote Card Exporter, Performance on 4GB Low-Memory Hardware & Edge Cases",
+    "title": "FileProvider Cache Directory Cleanup & Internal Storage Leak Lifecycle",
+    "question": "In saveBitmapToCacheAndGetUri (lines 588-608), generated quote card PNGs are saved to context.cacheDir/quote_cards/mahabharata_quote_{parva}_{chapter}_{verse}.png. Is there any automatic pruning policy (e.g., limiting cache to the 10 most recent cards or clearing cards on app launch), or will the quote_cards directory steadily accumulate megabytes of cached images over months of user sharing?",
+    "technical_context": "QuoteExportDialog.kt lines 588-608; FileProvider file_paths.xml cache-path; Android Context.cacheDir lifecycle.",
+    "verification_methodology": "Generate 15 different quote cards; inspect the app's cache directory via Device File Explorer; check whether old files are cleaned up or remain indefinitely; evaluate disk space overhead.",
+    "severity_if_unaddressed": "Low"
+  },
+  {
+    "id": "Q49",
+    "domain_id": 10,
+    "domain_name": "Quote Card Exporter, Performance on 4GB Low-Memory Hardware & Edge Cases",
+    "title": "Low-Memory Gradle Daemon Optimization for 4GB Fedora Developer Machines",
+    "question": "In gradle.properties, memory arguments are configured as org.gradle.jvmargs=-Xmx1200m -XX:MaxMetaspaceSize=384m -XX:+UseParallelGC, org.gradle.parallel=false, org.gradle.daemon=false, and kotlin.daemon.jvmargs=-Xmx600m. How does this strict ~2.2GB cumulative ceiling protect 4GB RAM Fedora Linux development environments from freezing or triggering the system Linux out-of-memory (OOM) killer during local Gradle APK compilation?",
+    "technical_context": "gradle.properties lines 5-13; ORIGINAL_REQUEST.md lines 26, 72; JVM heap management under Linux cgroups / swap.",
+    "verification_methodology": "Inspect gradle.properties; calculate total JVM memory footprint (1200m + 384m + 600m = 2184MB); confirm that daemon=false and parallel=false prevent multi-process memory spikes on restricted machines.",
+    "severity_if_unaddressed": "Medium"
+  },
+  {
+    "id": "Q50",
+    "domain_id": 10,
+    "domain_name": "Quote Card Exporter, Performance on 4GB Low-Memory Hardware & Edge Cases",
+    "title": "ProGuard/R8 Dead-Code Stripping vs. Room SQLite Reflection Safety",
+    "question": "In app/build.gradle.kts, release builds enable isMinifyEnabled = true and isShrinkResources = true. Does the concise 4-line proguard-rules.pro (-keep class com.vyas.mahabharata.data.local.entity.** { *; } and -keep class androidx.room.** { *; }) provide adequate protection for Room DAO implementations, SQLite FTS5 reflective bindings, and Compose compiler runtime metadata against aggressive R8 bytecode obfuscation and class stripping?",
+    "technical_context": "app/build.gradle.kts lines 28-34; proguard-rules.pro lines 1-4; R8 code shrinking and optimization; Room reflection and JNI bindings.",
+    "verification_methodology": "Run ./gradlew assembleRelease --stacktrace; decompile or inspect the resulting release APK via apktool / Android Studio APK Analyzer; verify that Room entities, DAOs, and SQLite FTS5 virtual table schemas are intact and functional.",
+    "severity_if_unaddressed": "High"
+  }
+]

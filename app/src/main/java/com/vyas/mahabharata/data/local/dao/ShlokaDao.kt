@@ -22,6 +22,14 @@ interface ShlokaDao {
     suspend fun getShlokaById(id: Long): ShlokaEntity?
 
     @Query("""
+        SELECT shlokas.* FROM shlokas
+        JOIN shlokas_fts ON shlokas.id = shlokas_fts.rowid
+        WHERE shlokas_fts MATCH :ftsQuery
+        LIMIT :limit OFFSET :offset
+    """)
+    suspend fun searchShlokasFts(ftsQuery: String, limit: Int = 50, offset: Int = 0): List<ShlokaEntity>
+
+    @Query("""
         SELECT * FROM shlokas 
         WHERE sanskrit_devanagari LIKE '%' || :query || '%' 
            OR sanskrit_iast LIKE '%' || :query || '%' 
@@ -30,7 +38,11 @@ interface ShlokaDao {
         ORDER BY parva_number ASC, chapter_number ASC, verse_number ASC
         LIMIT :limit OFFSET :offset
     """)
-    suspend fun searchShlokas(query: String, limit: Int = 50, offset: Int = 0): List<ShlokaEntity>
+    suspend fun searchShlokasLike(query: String, limit: Int = 50, offset: Int = 0): List<ShlokaEntity>
+
+    // Compatibility method
+    suspend fun searchShlokas(query: String, limit: Int = 50, offset: Int = 0): List<ShlokaEntity> =
+        searchShlokasLike(query, limit, offset)
 
     @Query("SELECT COUNT(*) FROM shlokas WHERE parva_number = :parvaNumber AND chapter_number = :chapterNumber")
     suspend fun getShlokaCountForChapter(parvaNumber: Int, chapterNumber: Int): Int

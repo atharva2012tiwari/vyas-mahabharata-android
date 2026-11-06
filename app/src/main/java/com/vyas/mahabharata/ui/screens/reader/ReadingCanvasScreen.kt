@@ -161,13 +161,14 @@ fun ReadingCanvasScreen(
         }
     }
 
-    // Persist reading position and calculate dynamic toolbar visibility
-    LaunchedEffect(listState) {
+    // 1. Debounced reading position persistence (500ms debounce protects against SQLite write contention during flings)
+    LaunchedEffect(listState, hasRestoredPosition) {
+        if (!hasRestoredPosition) return@LaunchedEffect
         snapshotFlow { listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset }
             .distinctUntilChanged()
             .collect { (currentIndex, currentOffset) ->
-                // Save position
-                if (hasRestoredPosition && shlokas.isNotEmpty()) {
+                kotlinx.coroutines.delay(500L)
+                if (shlokas.isNotEmpty()) {
                     val shlokaIndex = (currentIndex - 2).coerceAtLeast(0)
                     if (shlokaIndex in shlokas.indices) {
                         val currentVerse = shlokas[shlokaIndex].verseNumber
@@ -179,8 +180,14 @@ fun ReadingCanvasScreen(
                         )
                     }
                 }
+            }
+    }
 
-                // Smooth toolbar auto-hide on downward scroll
+    // 2. High-speed toolbar auto-hide on downward scroll
+    LaunchedEffect(listState) {
+        snapshotFlow { listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset }
+            .distinctUntilChanged()
+            .collect { (currentIndex, currentOffset) ->
                 val isScrollingDown = when {
                     currentIndex > previousIndex -> true
                     currentIndex < previousIndex -> false

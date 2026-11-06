@@ -593,9 +593,15 @@ suspend fun saveBitmapToCacheAndGetUri(
     val quoteCardsDir = File(context.cacheDir, "quote_cards")
     if (!quoteCardsDir.exists()) {
         quoteCardsDir.mkdirs()
+    } else {
+        // Automatic LRU cache pruning: keep max 10 most recent quote cards
+        val existingFiles = quoteCardsDir.listFiles()?.sortedByDescending { it.lastModified() }
+        if (existingFiles != null && existingFiles.size >= 10) {
+            existingFiles.drop(9).forEach { it.delete() }
+        }
     }
 
-    val fileName = "mahabharata_quote_${shloka.parvaNumber}_${shloka.chapterNumber}_${shloka.verseNumber}.png"
+    val fileName = "gita_quote_${shloka.parvaNumber}_${shloka.chapterNumber}_${shloka.verseNumber}.png"
     val file = File(quoteCardsDir, fileName)
 
     FileOutputStream(file).use { out ->
@@ -615,10 +621,10 @@ fun shareQuoteCard(context: Context, uri: Uri, attribution: String) {
         type = "image/png"
         putExtra(Intent.EXTRA_STREAM, uri)
         putExtra(Intent.EXTRA_SUBJECT, attribution)
-        putExtra(Intent.EXTRA_TEXT, "$attribution\nShared from Vyasa Mahabharata")
+        putExtra(Intent.EXTRA_TEXT, "$attribution\nShared from Srimad Bhagavad Gita")
         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
     }
-    val chooser = Intent.createChooser(shareIntent, "Share Mahabharata Quote").apply {
+    val chooser = Intent.createChooser(shareIntent, "Share Gita Quote").apply {
         addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     }
     context.startActivity(chooser)
