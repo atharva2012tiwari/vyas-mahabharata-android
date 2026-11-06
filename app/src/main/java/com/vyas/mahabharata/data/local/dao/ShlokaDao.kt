@@ -22,9 +22,11 @@ interface ShlokaDao {
     suspend fun getShlokaById(id: Long): ShlokaEntity?
 
     @Query("""
-        SELECT shlokas.* FROM shlokas
-        JOIN shlokas_fts ON shlokas.id = shlokas_fts.rowid
-        WHERE shlokas_fts MATCH :ftsQuery
+        SELECT * FROM shlokas 
+        WHERE id IN (
+            SELECT rowid FROM shlokas_fts WHERE shlokas_fts MATCH :ftsQuery
+        )
+        ORDER BY parva_number ASC, chapter_number ASC, verse_number ASC
         LIMIT :limit OFFSET :offset
     """)
     suspend fun searchShlokasFts(ftsQuery: String, limit: Int = 50, offset: Int = 0): List<ShlokaEntity>
